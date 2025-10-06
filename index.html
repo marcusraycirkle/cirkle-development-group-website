@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cirkle Development Group</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">Cirkle Development Group</div>
+    <nav>
+      <ul>
+        <li><a href="#home" onclick="showPage('home')">Home</a></li>
+        <li class="dropdown">
+          <a href="#">About Us</a>
+          <div class="dropdown-content">
+            <a href="#about-who-are-we" onclick="showPage('about-who-are-we')">Who are we?</a>
+            <a href="#about-our-goal" onclick="showPage('about-our-goal')">Our Goal</a>
+            <a href="#about-meet-executives" onclick="showPage('about-meet-executives')">Meet the Executives</a>
+            <a href="#about-join-us" onclick="showPage('about-join-us')">Join Us!</a>
+          </div>
+        </li>
+        <li class="dropdown">
+          <a href="#">Subsidiaries</a>
+          <div class="dropdown-content">
+            <a href="#subs-cirkle-development" onclick="showPage('subs-cirkle-development')">Cirkle Development</a>
+            <a href="#subs-aer-lingus-ptfs" onclick="showPage('subs-aer-lingus-ptfs')">Aer Lingus PTFS</a>
+            <a href="#subs-devden" onclick="showPage('subs-devden')">DevDen</a>
+          </div>
+        </li>
+        <li><a href="#contact" onclick="showPage('contact')">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <a href="https://portal.cirkledevelopment.co.uk" class="staff-login">Staff Login</a>
+
+  <!-- Home Page -->
+  <div id="home" class="page active">
+    <div class="slideshow">
+      <div class="slide"></div>
+      <div class="slide"></div>
+      <div class="slide"></div>
+      <div class="slide"></div>
+      <div class="slide"></div>
+      <div class="slide"></div>
+      <div class="overlay-text">Cirkle Development Group</div>
+    </div>
+    <div class="stats">
+      <div class="stat-card">
+        <h2>R$10k+</h2>
+        <p>Contributed to over R$10k</p>
+      </div>
+      <div class="stat-card">
+        <h2>4+</h2>
+        <p>Completed Commissions</p>
+      </div>
+      <div class="stat-card">
+        <h2>0 Issues</h2>
+        <p>Managed various payments with no issues</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- About: Who are we? -->
+  <div id="about-who-are-we" class="page">
+    <div class="banner" style="background-image: url('images/slide1.jpg');">
+      <div class="banner-text">We are the Cirkle Development Group</div>
+    </div>
+    <div class="content">
+      <p>Paragraph 1: Placeholder about who we are. Edit this.</p>
+      <p>Paragraph 2: More details here.</p>
+      <p>Paragraph 3: Additional info.</p>
+    </div>
+  </div>
+
+  <!-- About: Our Goal -->
+  <div id="about-our-goal" class="page">
+    <div class="banner" style="background-image: url('images/slide1.jpg');">
+      <div class="banner-text">Our Goal</div>
+    </div>
+    <div class="content">
+      <p>Showcasing our goal: Placeholder text about our objectives. Edit this.</p>
+    </div>
+    <div class="network-map">
+      <img src="images/main-logo.png" alt="Main Logo">
+      <div class="network-line"></div>
+      <img src="images/cirkle-logo.png" alt="Cirkle Logo">
+      <div class="network-line"></div>
+      <img src="images/aer-lingus-logo.png" alt="Aer Lingus Logo">
+      <div class="network-line"></div>
+      <img src="images/devden-logo.png" alt="DevDen Logo">
+    </div>
+  </div>
+
+  <!-- About: Meet the Executives -->
+  <div id="about-meet-executives" class="page">
+    <div class="banner" style="background-image: url('images/slide1.jpg');">
+      <div class="banner-text">Meet the Executives</div>
+    </div>
+    <div class="exec-cards">
+      <div class="exec-card">
+        <img src="images/exec1.jpg" alt="Exec 1">
+        <h3>Exec Name 1</h3>
+        <p>Role: CEO</p>
+        <p>Email: exec1@cirkledevelopment.co.uk</p>
+        <p>About: Placeholder bio. Edit this.</p>
+      </div>
+      <div class="exec-card">
+        <img src="images/exec2.jpg" alt="Exec 2">
+        <h3>Exec Name 2</h3>
+        <p>Role: CTO</p>
+        <p>Email: exec2@cirkledevelopment.co.uk</p>
+        <p>About: Placeholder bio. Edit this.</p>
+      </div>
+    </div>
+    <div class="content">
+      <p>Explanation paragraph: Placeholder. Input later.</p>
+    </div>
+  </div>
+
+  <!-- About: Join Us! -->
+  <div id="about-join-us" class="page">
+    <div class="banner" style="background-image: url('images/slide1.jpg');">
+      <div class="banner-text">Join Us!</div>
+    </div>
+    <div class="content">
+      <p>Placeholder for Join Us content. Edit later.</p>
+    </div>
+  </div>
+
+  <!-- Subsidiaries: Cirkle Development -->
+  <div id="subs-cirkle-development" class="page">
+    <div class="banner" style="background-image: url('images/slide1.jpg');">
+      <div class="banner-text">Cirkle Development</div>
+    </div>
+    <div class="content">
+      <p>Description: Placeholder about Cirkle Development. Edit this.</p>
+    </div>
+    <div class="discord-box">
+      <img src="images/cirkle-logo.png" alt="Cirkle Logo" width="100">
+      <br>
+      <a href="https://discord.gg/cirkle" class="discord-btn">Join Discord</a>
+    </div>
+  </div>
+
+  <!-- Subsidiaries: Aer Lingus PTFS -->
+  <div id="subs-aer-lingus-ptfs" class="page">
+    <div class="banner" style="background-image: url('images/slide1.jpg');">
+      <div class="banner-text">Aer Lingus PTFS</div>
+    </div>
+    <div class="content">
+      <p>Description: Placeholder about Aer Lingus PTFS. Edit this.</p>
+    </div>
+    <div class="discord-box">
+      <img src="images/aer-lingus-logo.png" alt="Aer Lingus Logo" width="100">
+      <br>
+      <a href="https://discord.gg/aerlingus" class="discord-btn">Join Discord</a>
+    </div>
+  </div>
+
+  <!-- Subsidiaries: DevDen -->
+  <div id="subs-devden" class="page">
+    <div class="banner" style="background-image: url('images/slide1.jpg');">
+      <div class="banner-text">DevDen</div>
+    </div>
+    <div class="content">
+      <p>Description: Placeholder about DevDen. Edit this.</p>
+    </div>
+    <div class="discord-box">
+      <img src="images/devden-logo.png" alt="DevDen Logo" width="100">
+      <br>
+      <a href="https://discord.gg/devden" class="discord-btn">Join Discord</a>
+    </div>
+  </div>
+
+  <!-- Contact -->
+  <div id="contact" class="page">
+    <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfVTEMr8cvjpeW8D3nK0J-ie5mS87XoWepYf5InNY6p9Dcq6w/viewform?usp=dialog" width="100%" height="800" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+  </div>
+
+  <footer>
+    Cirkle Development Group 2025 | info@cirkledevelopment.co.uk
+  </footer>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
