@@ -20,11 +20,11 @@ header {
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  transition: all 0.3s ease; /* Animation for header */
+  transition: all 0.3s ease;
 }
 
 header:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .logo {
@@ -33,12 +33,12 @@ header:hover {
   color: #6b46c1;
   letter-spacing: 1px;
   margin-right: auto;
-  transition: transform 0.3s ease, color 0.3s ease; /* Logo animation */
+  transition: transform 0.3s ease, color 0.3s ease;
 }
 
 .logo:hover {
   transform: scale(1.05);
-  color: #553c9a; /* Darker purple on hover */
+  color: #553c9a;
 }
 
 nav ul {
@@ -46,34 +46,34 @@ nav ul {
   display: flex;
   margin: 0;
   padding: 0;
-  margin-left: -40px; /* Move buttons further to the side (increased from -20px) */
-  transition: transform 0.3s ease; /* Animation for nav */
+  margin-left: -30px; /* Adjusted to move buttons slightly more to the right */
+  transition: transform 0.3s ease;
 }
 
 nav ul:hover {
-  transform: translateX(-5px); /* Slight shift on hover */
+  transform: translateX(-5px);
 }
 
 nav li {
   margin: 0 20px;
   position: relative;
-  transition: transform 0.3s ease; /* Animation for li */
+  transition: transform 0.3s ease;
 }
 
 nav li:hover {
-  transform: scale(1.1); /* Slight scale on hover */
+  transform: scale(1.1);
 }
 
 nav a {
   color: #4a5568;
   text-decoration: none;
   font-size: 16px;
-  transition: color 0.3s ease, text-shadow 0.3s ease; /* Enhanced transition */
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 nav a:hover {
   color: #6b46c1;
-  text-shadow: 0 0 5px rgba(107, 70, 193, 0.5); /* Glow effect */
+  text-shadow: 0 0 5px rgba(107, 70, 193, 0.5);
 }
 
 .dropdown-content {
@@ -101,13 +101,13 @@ nav a:hover {
   display: block;
   padding: 10px 20px;
   color: #4a5568;
-  transition: all 0.3s ease; /* Animation for dropdown items */
+  transition: all 0.3s ease;
 }
 
 .dropdown-content a:hover {
   background: #f7fafc;
   color: #6b46c1;
-  transform: translateX(5px); /* Slide effect on hover */
+  transform: translateX(5px);
 }
 
 .staff-login {
@@ -118,16 +118,16 @@ nav a:hover {
   text-decoration: none;
   font-weight: 600;
   box-shadow: 0 4px 15px rgba(107, 70, 193, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease; /* Enhanced transitions */
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
   margin-left: 20px;
   font-size: 1rem;
-  animation: pulse 2s infinite; /* Pulsing animation */
+  animation: pulse 2s infinite;
 }
 
 .staff-login:hover {
   transform: scale(1.05);
   box-shadow: 0 6px 20px rgba(107, 70, 193, 0.4);
-  background: #553c9a; /* Darker purple on hover */
+  background: #553c9a;
 }
 
 @keyframes pulse {
@@ -139,7 +139,7 @@ nav a:hover {
 .page {
   display: none;
   padding: 80px 30px 20px;
-  transition: opacity 0.5s ease, transform 0.5s ease; /* Enhanced page transition */
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 .page.active {
@@ -149,7 +149,7 @@ nav a:hover {
 }
 
 .page.active {
-  animation: slideIn 0.5s ease; /* Slide-in animation for active page */
+  animation: slideIn 0.5s ease;
 }
 
 @keyframes slideIn {
@@ -164,11 +164,12 @@ nav a:hover {
   margin-bottom: 40px;
   border-radius: 10px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease; /* Animation for slideshow */
+  transition: box-shadow 0.3s ease;
+  margin-top: 80px; /* Lower banner to create a small gap with header */
 }
 
 .slideshow:hover {
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2);
 }
 
 .slide {
@@ -181,7 +182,7 @@ nav a:hover {
   background-position: center;
   opacity: 0;
   animation: fade 24s infinite;
-  transition: opacity 0.5s ease; /* For manual arrow navigation */
+  transition: opacity 0.5s ease;
 }
 
 @keyframes fade {
@@ -225,9 +226,14 @@ nav a:hover {
   border-radius: 3px 0 0 3px;
 }
 
+.prev {
+  left: 0;
+  border-radius: 3px 0 0 3px;
+}
+
 .prev:hover, .next:hover {
   background-color: rgba(0, 0, 0, 0.8);
-  transform: scale(1.2); /* Scale on hover */
+  transform: scale(1.2);
 }
 
 .overlay-text {
@@ -243,12 +249,7 @@ nav a:hover {
   padding: 10px 20px;
   background: rgba(107, 70, 193, 0.7);
   border-radius: 8px;
-  transition: transform 0.3s ease, font-size 0.3s ease; /* Animation for overlay */
-}
-
-.overlay-text:hover {
-  transform: scale(1.1);
-  font-size: 52px; /* Slightly larger on hover */
+  /* Removed hover animation as requested */
 }
 
 .stats {
@@ -257,11 +258,11 @@ nav a:hover {
   gap: 30px;
   padding: 40px 0;
   flex-wrap: wrap;
-  transition: transform 0.3s ease; /* Animation for stats */
+  transition: transform 0.3s ease;
 }
 
 .stats:hover {
-  transform: translateY(-5px); /* Lift effect on hover */
+  transform: translateY(-5px);
 }
 
 .stat-card {
@@ -271,33 +272,33 @@ nav a:hover {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   text-align: center;
   width: 200px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Enhanced transitions */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card h2 {
   font-size: 28px;
   color: #6b46c1;
   margin: 10px 0;
-  transition: color 0.3s ease; /* Animation for h2 */
+  transition: color 0.3s ease;
 }
 
 .stat-card h2:hover {
-  color: #553c9a; /* Darker purple on hover */
+  color: #553c9a;
 }
 
 .stat-card p {
   font-size: 14px;
   color: #718096;
-  transition: color 0.3s ease; /* Animation for p */
+  transition: color 0.3s ease;
 }
 
 .stat-card p:hover {
-  color: #4a5568; /* Slightly darker on hover */
+  color: #4a5568;
 }
 
 .banner {
@@ -311,12 +312,13 @@ nav a:hover {
   margin-bottom: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Animation for banner */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  margin-top: 80px; /* Lower banner to create a small gap with header */
 }
 
 .banner:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2);
 }
 
 .banner-text {
@@ -327,12 +329,12 @@ nav a:hover {
   background: rgba(0, 0, 0, 0.3);
   padding: 10px 20px;
   border-radius: 5px;
-  transition: transform 0.3s ease, font-size 0.3s ease; /* Animation for banner text */
+  transition: transform 0.3s ease, font-size 0.3s ease;
 }
 
 .banner-text:hover {
   transform: scale(1.1);
-  font-size: 52px; /* Slightly larger on hover */
+  font-size: 52px;
 }
 
 .content {
@@ -341,11 +343,11 @@ nav a:hover {
   padding: 20px;
   line-height: 1.8;
   color: #2d3748;
-  transition: opacity 0.3s ease; /* Animation for content */
+  transition: opacity 0.3s ease;
 }
 
 .content:hover {
-  opacity: 0.95; /* Slight fade on hover */
+  opacity: 0.95;
 }
 
 .network-map {
@@ -353,11 +355,11 @@ nav a:hover {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  transition: transform 0.3s ease; /* Animation for network-map */
+  transition: transform 0.3s ease;
 }
 
 .network-map:hover {
-  transform: scale(1.02); /* Slight scale on hover */
+  transform: scale(1.02);
 }
 
 .network-map img {
@@ -365,23 +367,23 @@ nav a:hover {
   margin: 0 20px;
   border-radius: 50%;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Animation for images */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .network-map img:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .network-line {
   flex: 1;
   height: 2px;
   background: #cbd5e0;
-  transition: background 0.3s ease; /* Animation for line */
+  transition: background 0.3s ease;
 }
 
 .network-line:hover {
-  background: #a0aec0; /* Slightly darker on hover */
+  background: #a0aec0;
 }
 
 .exec-cards {
@@ -390,11 +392,11 @@ nav a:hover {
   gap: 30px;
   padding: 20px;
   flex-wrap: wrap;
-  transition: transform 0.3s ease; /* Animation for exec-cards */
+  transition: transform 0.3s ease;
 }
 
 .exec-cards:hover {
-  transform: translateY(-5px); /* Lift effect on hover */
+  transform: translateY(-5px);
 }
 
 .exec-card {
@@ -404,46 +406,46 @@ nav a:hover {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   text-align: center;
   width: 300px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Enhanced transitions */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .exec-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
 .exec-card img {
   width: 100%;
   border-radius: 10px;
   margin-bottom: 15px;
-  transition: transform 0.3s ease; /* Animation for images */
+  transition: transform 0.3s ease;
 }
 
 .exec-card img:hover {
-  transform: scale(1.05); /* Slight scale on hover */
+  transform: scale(1.05);
 }
 
 .exec-card h3 {
   font-size: 20px;
   color: #6b46c1;
   margin: 10px 0;
-  transition: color 0.3s ease, transform 0.3s ease; /* Animation for h3 */
+  transition: color 0.3s ease, transform 0.3s ease;
 }
 
 .exec-card h3:hover {
   color: #553c9a;
-  transform: scale(1.05); /* Slight scale on hover */
+  transform: scale(1.05);
 }
 
 .exec-card p {
   font-size: 14px;
   color: #718096;
   margin: 5px 0;
-  transition: color 0.3s ease; /* Animation for p */
+  transition: color 0.3s ease;
 }
 
 .exec-card p:hover {
-  color: #4a5568; /* Slightly darker on hover */
+  color: #4a5568;
 }
 
 .discord-box {
@@ -454,12 +456,12 @@ nav a:hover {
   width: 300px;
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(107, 70, 193, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Animation for discord-box */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .discord-box:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(107, 70, 193, 0.4); /* Enhanced shadow on hover */
+  box-shadow: 0 6px 20px rgba(107, 70, 193, 0.4);
 }
 
 .discord-btn {
@@ -469,13 +471,13 @@ nav a:hover {
   border-radius: 5px;
   text-decoration: none;
   font-weight: 600;
-  transition: all 0.3s ease; /* Enhanced transition */
+  transition: all 0.3s ease;
 }
 
 .discord-btn:hover {
   background: #6b46c1;
   color: #fff;
-  transform: translateX(5px); /* Slide effect on hover */
+  transform: translateX(5px);
 }
 
 footer {
@@ -484,18 +486,18 @@ footer {
   text-align: center;
   padding: 15px;
   margin-top: auto;
-  transition: background 0.3s ease; /* Animation for footer */
+  transition: background 0.3s ease;
 }
 
 footer:hover {
-  background: #1a202c; /* Darker background on hover */
+  background: #1a202c;
 }
 
 footer a {
   color: #a0aec0;
   text-decoration: none;
   margin: 0 10px;
-  transition: color 0.3s ease; /* Animation for links */
+  transition: color 0.3s ease;
 }
 
 footer a:hover {
