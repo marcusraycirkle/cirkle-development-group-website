@@ -17,7 +17,7 @@ header {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 15px 30px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   z-index: 1000;
   transition: all 0.3s ease;
@@ -46,7 +46,8 @@ nav ul {
   display: flex;
   margin: 0;
   padding: 0;
-  margin-left: -30px; /* Adjusted to move buttons slightly more to the right */
+  margin-left: 0;
+  margin-right: 40px; /* Move nav buttons further left, away from staff-login */
   transition: transform 0.3s ease;
 }
 
@@ -119,7 +120,7 @@ nav a:hover {
   font-weight: 600;
   box-shadow: 0 4px 15px rgba(107, 70, 193, 0.3);
   transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-  margin-left: 20px;
+  margin-left: 0;
   font-size: 1rem;
   animation: pulse 2s infinite;
 }
