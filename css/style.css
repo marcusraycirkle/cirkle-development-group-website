@@ -170,28 +170,14 @@ nav a:hover {
   margin-top: 80px; /* Lower banner to create a small gap with header */
 }
 
-/* Other slideshows (not home) */
-.slideshow:not(#home .slideshow) .slide {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  opacity: 1;
-  animation: none;
-  transition: none;
-  z-index: 1;
-}
+
 
 .slideshow:hover {
   box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2);
 }
 
 
-/* Home page slides only */
-#home .slide {
+.slide {
   position: absolute;
   top: 0;
   left: 0;
@@ -214,6 +200,13 @@ nav a:hover {
 
 .slide.active {
   opacity: 1;
+}
+
+/* Always show overlay/banner text on all slideshows */
+.overlay-text, .banner-text {
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 2;
 }
 
 .slide:nth-child(1) { animation-delay: 0s; }
