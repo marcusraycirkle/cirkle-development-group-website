@@ -177,7 +177,9 @@ nav a:hover {
 }
 
 
-.slide {
+
+/* Home page slideshow images */
+#home .slide {
   position: absolute;
   top: 0;
   left: 0;
@@ -188,6 +190,42 @@ nav a:hover {
   opacity: 0;
   animation: fade 24s infinite;
   transition: opacity 0.5s ease;
+}
+
+/* Non-home pages: show only one image, no animation, no absolute */
+.page:not(#home) .slideshow {
+  position: relative;
+  height: 350px;
+  margin-bottom: 0;
+}
+.page:not(#home) .slide {
+  position: relative;
+  width: 100%;
+  height: 350px;
+  opacity: 1;
+  animation: none;
+  transition: none;
+}
+
+/* Banner text bottom left for non-home pages */
+.page:not(#home) .banner-text {
+  position: absolute;
+  left: 30px;
+  bottom: 30px;
+  top: auto;
+  transform: none;
+  font-size: 32px;
+  background: rgba(0,0,0,0.5);
+  padding: 10px 20px;
+  border-radius: 5px;
+  color: #fff;
+  z-index: 2;
+}
+
+/* Ensure .slideshow is not too tall on non-home pages */
+.page:not(#home) .slideshow {
+  max-width: 100%;
+  overflow: hidden;
 }
 
 @keyframes fade {
