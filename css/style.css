@@ -193,15 +193,16 @@ nav a:hover {
 }
 
 /* Non-home pages: show only one image, no animation, no absolute */
+/* Make non-home page images same height as home page slideshow */
 .page:not(#home) .slideshow {
   position: relative;
-  height: 350px;
+  height: 500px;
   margin-bottom: 0;
 }
 .page:not(#home) .slide {
   position: relative;
   width: 100%;
-  height: 350px;
+  height: 500px;
   opacity: 1;
   animation: none;
   transition: none;
