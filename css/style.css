@@ -1,3 +1,12 @@
+.page:not(#home) .slide {
+  object-fit: cover;
+  display: block;
+}
+
+/* Hide extra slides if any exist on non-home pages */
+.page:not(#home) .slide ~ .slide {
+  display: none !important;
+}
 body {
   margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
