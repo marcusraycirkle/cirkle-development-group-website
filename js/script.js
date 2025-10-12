@@ -1,8 +1,10 @@
 let slideIndex = 0;
-showSlides();
 
 function showSlides() {
-  let slides = document.getElementsByClassName("slide");
+  // Only run slideshow logic on the home page
+  const homePage = document.getElementById('home');
+  if (!homePage || !homePage.classList.contains('active')) return;
+  let slides = homePage.getElementsByClassName("slide");
   for (let i = 0; i < slides.length; i++) {
     slides[i].classList.remove("active");
   }
@@ -13,7 +15,9 @@ function showSlides() {
 }
 
 function plusSlides(n) {
-  let slides = document.getElementsByClassName("slide");
+  const homePage = document.getElementById('home');
+  if (!homePage || !homePage.classList.contains('active')) return;
+  let slides = homePage.getElementsByClassName("slide");
   slideIndex += n;
   if (slideIndex > slides.length) { slideIndex = 1; }
   if (slideIndex < 1) { slideIndex = slides.length; }
@@ -37,14 +41,25 @@ function showPage(pageId) {
   window.location.hash = pageId;
 }
 
+
+function startHomeSlideshowIfNeeded() {
+  const homePage = document.getElementById('home');
+  if (homePage && homePage.classList.contains('active')) {
+    slideIndex = 0;
+    showSlides();
+  }
+}
+
 window.addEventListener('load', () => {
   const hash = window.location.hash.substring(1);
   showPage(hash || 'home');
+  startHomeSlideshowIfNeeded();
 });
 
 window.addEventListener('hashchange', () => {
   const hash = window.location.hash.substring(1);
   showPage(hash || 'home');
+  startHomeSlideshowIfNeeded();
 });
 
 window.addEventListener('scroll', () => {
