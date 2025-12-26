@@ -38,7 +38,23 @@ function showPage(pageId) {
   }
 }
 
+// Handle hash changes
+function handleHashChange() {
+  let hash = window.location.hash.substring(1); // Remove the # symbol
+  if (!hash || hash === '') {
+    hash = 'home'; // Default to home page
+  }
+  showPage(hash);
+}
+
 // Initialize slideshow when page loads
 document.addEventListener('DOMContentLoaded', () => {
+  // Handle initial hash or show home
+  handleHashChange();
+  
+  // Start slideshow
   showSlides();
+  
+  // Listen for hash changes
+  window.addEventListener('hashchange', handleHashChange);
 });
