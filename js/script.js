@@ -37,3 +37,8 @@ function showPage(pageId) {
     targetPage.classList.add('active');
   }
 }
+
+// Initialize slideshow when page loads
+document.addEventListener('DOMContentLoaded', () => {
+  showSlides();
+});

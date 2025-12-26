@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consumer Login - Cirkle Development Group</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+  <header>
+    <div class="logo" onclick="window.location.href='/'">Cirkle Development Group</div>
+    <nav>
+      <ul>
+        <li><a href="/#home">Home</a></li>
+        <li><a href="/#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="auth-container">
+    <div class="auth-box">
+      <div class="auth-header">
+        <h1>Consumer Portal</h1>
+        <p>Access your account</p>
+      </div>
+
+      <!-- Tab Selector -->
+      <div class="auth-tabs">
+        <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+        <button class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="login-form" class="auth-form active">
+        <h2>Welcome Back</h2>
+        <form onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="login-username">Username</label>
+            <input type="text" id="login-username" required placeholder="Enter your username">
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" required placeholder="Enter your password">
+          </div>
+          <div style="text-align: right; margin-bottom: 10px;">
+            <a href="#" onclick="showForgotPassword(); return false;" style="color: #6b46c1; text-decoration: none; font-size: 14px;">Forgot Password?</a>
+          </div>
+          <div id="login-error" class="error-message"></div>
+          <button type="submit" class="auth-btn">
+            <span class="btn-text">Login</span>
+            <span class="btn-loader" style="display: none;">
+              <div class="loader"></div>
+            </span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Signup Form -->
+      <div id="signup-form" class="auth-form">
+        <h2>Create Account</h2>
+        <form onsubmit="handleSignup(event)">
+          <div class="form-group">
+            <label for="signup-username">Username</label>
+            <input type="text" id="signup-username" required placeholder="Choose a username" minlength="3">
+          </div>
+          <div class="form-group">
+            <label for="signup-password">Password</label>
+            <input type="password" id="signup-password" required placeholder="Choose a password" minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="signup-confirm-password">Confirm Password</label>
+            <input type="password" id="signup-confirm-password" required placeholder="Confirm your password">
+          </div>
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" id="age-confirm" required>
+              I confirm that I am 13 years or older
+            </label>
+          </div>
+          <div id="signup-error" class="error-message"></div>
+          <button type="submit" class="auth-btn">
+            <span class="btn-text">Create Account</span>
+            <span class="btn-loader" style="display: none;">
+              <div class="loader"></div>
+            </span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgot-password-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>Forgot Password</h2>
+        <button class="modal-close" onclick="closeForgotPassword()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: #4a5568; line-height: 1.8; margin-bottom: 20px;">
+          To reset your password, please open a support ticket in the <strong>Cirkle Development Discord server</strong>. Our support team will assist you with account recovery.
+        </p>
+        <a href="https://discord.gg/akS9HdbxBe" target="_blank" class="auth-btn" style="text-decoration: none; display: block; text-align: center;">
+          Open Discord Server
+        </a>
+        <p style="text-align: center; margin-top: 15px; color: #718096; font-size: 14px;">
+          Click the button above to join our Discord server
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    © Cirkle Development Group 2025 | <a href="mailto:info@cirkledevelopment.co.uk">info@cirkledevelopment.co.uk</a>
+  </footer>
+
+  <script src="../js/auth.js"></script>
+  <script>
+    // Check if already logged in
+    if (auth.isLoggedIn()) {
+      if (auth.isAdmin()) {
+        window.location.href = '/admin/dashboard.html';
+      } else {
+        window.location.href = '/consumer/dashboard.html';
+      }
+    }
+
+    function switchTab(tab) {
+      const loginForm = document.getElementById('login-form');
+      const signupForm = document.getElementById('signup-form');
+      const tabs = document.querySelectorAll('.tab-btn');
+
+      if (tab === 'login') {
+        loginForm.classList.add('active');
+        signupForm.classList.remove('active');
+        tabs[0].classList.add('active');
+        tabs[1].classList.remove('active');
+      } else {
+        signupForm.classList.add('active');
+        loginForm.classList.remove('active');
+        tabs[1].classList.add('active');
+        tabs[0].classList.remove('active');
+      }
+
+      // Clear error messages
+      document.getElementById('login-error').textContent = '';
+      document.getElementById('signup-error').textContent = '';
+    }
+
+    function showLoader(button) {
+      const btnText = button.querySelector('.btn-text');
+      const btnLoader = button.querySelector('.btn-loader');
+      btnText.style.display = 'none';
+      btnLoader.style.display = 'inline-block';
+      button.disabled = true;
+    }
+
+    function hideLoader(button) {
+      const btnText = button.querySelector('.btn-text');
+      const btnLoader = button.querySelector('.btn-loader');
+      btnText.style.display = 'inline';
+      btnLoader.style.display = 'none';
+      button.disabled = false;
+    }
+
+    function handleLogin(event) {
+      event.preventDefault();
+      
+      const username = document.getElementById('login-username').value;
+      const password = document.getElementById('login-password').value;
+      const errorDiv = document.getElementById('login-error');
+      const button = event.target.querySelector('button');
+
+      errorDiv.textContent = '';
+      showLoader(button);
+
+      // Simulate loading delay
+      setTimeout(() => {
+        const result = auth.login(username, password);
+
+        if (result.success) {
+          // Redirect based on user type
+          if (result.user.isAdmin) {
+            window.location.href = '/admin/dashboard.html';
+          } else {
+            window.location.href = '/consumer/dashboard.html';
+          }
+        } else {
+          errorDiv.textContent = result.message;
+          hideLoader(button);
+        }
+      }, 1000);
+    }
+
+    function handleSignup(event) {
+      event.preventDefault();
+
+      const username = document.getElementById('signup-username').value;
+      const password = document.getElementById('signup-password').value;
+      const confirmPassword = document.getElementById('signup-confirm-password').value;
+      const ageConfirm = document.getElementById('age-confirm').checked;
+      const errorDiv = document.getElementById('signup-error');
+      const button = event.target.querySelector('button');
+
+      errorDiv.textContent = '';
+
+      // Validation
+      if (password !== confirmPassword) {
+        errorDiv.textContent = 'Passwords do not match';
+        return;
+      }
+
+      if (!ageConfirm) {
+        errorDiv.textContent = 'You must confirm you are 13 or older';
+        return;
+      }
+
+      showLoader(button);
+
+      // Simulate loading delay
+      setTimeout(() => {
+        const result = auth.register(username, password);
+
+        if (result.success) {
+          // Auto login after registration
+          auth.login(username, password);
+          window.location.href = '/consumer/dashboard.html';
+        } else {
+          errorDiv.textContent = result.message;
+          hideLoader(button);
+        }
+      }, 1000);
+    }
+
+    function showForgotPassword() {
+      document.getElementById('forgot-password-modal').classList.add('active');
+    }
+
+    function closeForgotPassword() {
+      document.getElementById('forgot-password-modal').classList.remove('active');
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('forgot-password-modal');
+      if (event.target === modal) {
+        closeForgotPassword();
+      }
+    }
+  </script>
+</body>
+</html>

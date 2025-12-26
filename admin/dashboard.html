@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Cirkle Development Group</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/auth.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <header>
+    <div class="logo" onclick="window.location.href='/'">Cirkle Development Group</div>
+    <nav>
+      <ul>
+        <li><a href="/#home">Home</a></li>
+        <li><a href="/blog.html">Blog</a></li>
+        <li><a href="/#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <a href="/consumer/login.html" class="staff-login">Consumer Login</a>
+  </header>
+
+  <div class="dashboard-container">
+    <div class="dashboard-header" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">
+      <h1>🛡️ Admin Dashboard</h1>
+      <p>Manage content, users, and system settings</p>
+    </div>
+
+    <!-- Admin Navigation Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" onclick="switchAdminTab('overview')">Overview</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('blogs')">Blog Posts</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('users')">Users</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('suggestions')">Suggestions</button>
+    </div>
+
+    <!-- Overview Tab -->
+    <div id="overview-tab" class="admin-tab-content active">
+      <div class="dashboard-grid">
+        <div class="dashboard-card">
+          <h2>📝 Total Blogs</h2>
+          <p class="stat-number" id="total-blogs">0</p>
+          <p>Published blog posts</p>
+        </div>
+        <div class="dashboard-card">
+          <h2>👥 Total Users</h2>
+          <p class="stat-number" id="total-users">0</p>
+          <p>Registered consumer accounts</p>
+        </div>
+        <div class="dashboard-card">
+          <h2>💡 Suggestions</h2>
+          <p class="stat-number" id="total-suggestions">0</p>
+          <p>Pending blog suggestions</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blog Posts Tab -->
+    <div id="blogs-tab" class="admin-tab-content">
+      <div class="admin-section-header">
+        <h2>Manage Blog Posts</h2>
+        <button class="dashboard-btn" onclick="openCreateBlogModal()">+ Create New Blog</button>
+      </div>
+      <div id="blogs-list" class="admin-list">
+        <!-- Blogs will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Users Tab -->
+    <div id="users-tab" class="admin-tab-content">
+      <div class="admin-section-header">
+        <h2>Manage Users</h2>
+      </div>
+      <div id="users-list" class="admin-table-container">
+        <!-- Users will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Suggestions Tab -->
+    <div id="suggestions-tab" class="admin-tab-content">
+      <div class="admin-section-header">
+        <h2>Blog Suggestions</h2>
+      </div>
+      <div id="suggestions-list" class="admin-list">
+        <!-- Suggestions will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Blog Modal -->
+  <div id="create-blog-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2>Create New Blog Post</h2>
+        <button class="modal-close" onclick="closeCreateBlogModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="createBlog(event)">
+          <div class="form-group">
+            <label for="blog-title">Blog Title</label>
+            <input type="text" id="blog-title" required placeholder="Enter blog title">
+          </div>
+          <div class="form-group">
+            <label for="blog-banner">Banner Image URL</label>
+            <input type="url" id="blog-banner" placeholder="https://example.com/image.jpg">
+            <small style="color: #718096; font-size: 13px; margin-top: 5px; display: block;">
+              Leave blank to use default image
+            </small>
+          </div>
+          <div class="form-group">
+            <label for="blog-thumbnail">Thumbnail Image URL (Optional)</label>
+            <input type="url" id="blog-thumbnail" placeholder="https://example.com/thumbnail.jpg">
+            <small style="color: #718096; font-size: 13px; margin-top: 5px; display: block;">
+              If not provided, banner image will be used
+            </small>
+          </div>
+          <div class="form-group">
+            <label for="blog-content">Blog Content (HTML supported)</label>
+            <textarea id="blog-content" required placeholder="Write your blog content here... You can use HTML tags like <p>, <h2>, <strong>, etc." style="min-height: 300px;"></textarea>
+            <small style="color: #718096; font-size: 13px; margin-top: 5px; display: block;">
+              Tip: Use &lt;p&gt; for paragraphs, &lt;h2&gt; for headings, &lt;strong&gt; for bold text
+            </small>
+          </div>
+          <div id="blog-message" class="success-message"></div>
+          <button type="submit" class="auth-btn">Publish Blog Post</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    © Cirkle Development Group 2025 | <a href="mailto:info@cirkledevelopment.co.uk">info@cirkledevelopment.co.uk</a>
+  </footer>
+
+  <script src="../js/auth.js"></script>
+  <script>
+    // Check admin authentication
+    if (!auth.isLoggedIn() || !auth.isAdmin()) {
+      window.location.href = '/consumer/login.html';
+    }
+
+    // Update header
+    updateHeader();
+
+    // Load overview stats
+    function loadOverview() {
+      const blogs = blogManager.getAllBlogs();
+      const users = auth.getAllUsers();
+      const suggestions = blogManager.getAllSuggestions();
+
+      document.getElementById('total-blogs').textContent = blogs.length;
+      document.getElementById('total-users').textContent = users.length;
+      document.getElementById('total-suggestions').textContent = suggestions.filter(s => s.status === 'pending').length;
+    }
+
+    // Load blogs list
+    function loadBlogs() {
+      const blogs = blogManager.getAllBlogs();
+      const blogsList = document.getElementById('blogs-list');
+
+      if (blogs.length === 0) {
+        blogsList.innerHTML = '<p style="text-align: center; color: #718096; padding: 40px;">No blog posts yet. Create your first blog!</p>';
+        return;
+      }
+
+      blogsList.innerHTML = blogs.map(blog => {
+        const date = new Date(blog.publishDate).toLocaleDateString('en-GB');
+        return `
+          <div class="admin-item">
+            <div class="admin-item-content">
+              <h3>${blog.title}</h3>
+              <p>By ${blog.author} • ${date} • ${blog.comments.length} comments</p>
+            </div>
+            <div class="admin-item-actions">
+              <a href="/blog-post.html?id=${blog.id}" target="_blank" class="dashboard-btn secondary">View</a>
+              <button onclick="deleteBlog(${blog.id})" class="dashboard-btn" style="background: #dc2626;">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Load users list
+    function loadUsers() {
+      const users = auth.getAllUsers();
+      const usersList = document.getElementById('users-list');
+
+      if (users.length === 0) {
+        usersList.innerHTML = '<p style="text-align: center; color: #718096; padding: 40px;">No registered users yet.</p>';
+        return;
+      }
+
+      usersList.innerHTML = `
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Username</th>
+              <th>Created</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(user => {
+              const date = new Date(user.createdAt).toLocaleDateString('en-GB');
+              return `
+                <tr>
+                  <td>
+                    <img src="${user.profilePhoto}" alt="${user.username}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">
+                  </td>
+                  <td><strong>${user.username}</strong></td>
+                  <td>${date}</td>
+                  <td>
+                    <span class="status-badge ${user.suspended ? 'status-suspended' : 'status-active'}">
+                      ${user.suspended ? 'Suspended' : 'Active'}
+                    </span>
+                  </td>
+                  <td>
+                    ${user.suspended ? 
+                      `<button onclick="unsuspendUser(${user.id})" class="table-btn success-btn">Unsuspend</button>` :
+                      `<button onclick="suspendUser(${user.id})" class="table-btn warning-btn">Suspend</button>`
+                    }
+                    <button onclick="deleteUser(${user.id})" class="table-btn danger-btn">Delete</button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // Load suggestions
+    function loadSuggestions() {
+      const suggestions = blogManager.getAllSuggestions();
+      const suggestionsList = document.getElementById('suggestions-list');
+
+      const pendingSuggestions = suggestions.filter(s => s.status === 'pending');
+
+      if (pendingSuggestions.length === 0) {
+        suggestionsList.innerHTML = '<p style="text-align: center; color: #718096; padding: 40px;">No pending suggestions.</p>';
+        return;
+      }
+
+      suggestionsList.innerHTML = pendingSuggestions.map(suggestion => {
+        const date = new Date(suggestion.suggestedAt).toLocaleDateString('en-GB');
+        return `
+          <div class="admin-item">
+            <div class="admin-item-content">
+              <h3>${suggestion.title}</h3>
+              <p><strong>Suggested by:</strong> ${suggestion.suggestedBy} • ${date}</p>
+              <p style="margin-top: 10px; color: #4a5568;">${suggestion.content}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Tab switching
+    function switchAdminTab(tab) {
+      const tabs = document.querySelectorAll('.admin-tab-btn');
+      const contents = document.querySelectorAll('.admin-tab-content');
+
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => c.classList.remove('active'));
+
+      document.querySelector(`button[onclick="switchAdminTab('${tab}')"]`).classList.add('active');
+      document.getElementById(`${tab}-tab`).classList.add('active');
+
+      // Load content for the selected tab
+      if (tab === 'overview') loadOverview();
+      if (tab === 'blogs') loadBlogs();
+      if (tab === 'users') loadUsers();
+      if (tab === 'suggestions') loadSuggestions();
+    }
+
+    // Create blog modal
+    function openCreateBlogModal() {
+      document.getElementById('create-blog-modal').classList.add('active');
+      document.getElementById('blog-message').textContent = '';
+    }
+
+    function closeCreateBlogModal() {
+      document.getElementById('create-blog-modal').classList.remove('active');
+      document.getElementById('blog-title').value = '';
+      document.getElementById('blog-banner').value = '';
+      document.getElementById('blog-thumbnail').value = '';
+      document.getElementById('blog-content').value = '';
+    }
+
+    function createBlog(event) {
+      event.preventDefault();
+
+      const blogData = {
+        title: document.getElementById('blog-title').value,
+        content: document.getElementById('blog-content').value,
+        bannerImage: document.getElementById('blog-banner').value,
+        thumbnailImage: document.getElementById('blog-thumbnail').value
+      };
+
+      const result = blogManager.createBlog(blogData, auth.currentUser);
+
+      if (result.success) {
+        const messageDiv = document.getElementById('blog-message');
+        messageDiv.textContent = 'Blog post created successfully!';
+        setTimeout(() => {
+          closeCreateBlogModal();
+          switchAdminTab('blogs');
+        }, 1500);
+      }
+    }
+
+    // Delete blog
+    function deleteBlog(blogId) {
+      if (confirm('Are you sure you want to delete this blog post? This action cannot be undone.')) {
+        blogManager.deleteBlog(blogId);
+        loadBlogs();
+        loadOverview();
+      }
+    }
+
+    // User management
+    function suspendUser(userId) {
+      if (confirm('Are you sure you want to suspend this user?')) {
+        auth.suspendUser(userId);
+        loadUsers();
+      }
+    }
+
+    function unsuspendUser(userId) {
+      auth.unsuspendUser(userId);
+      loadUsers();
+    }
+
+    function deleteUser(userId) {
+      if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        auth.deleteUser(userId);
+        loadUsers();
+        loadOverview();
+      }
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+      const createBlogModal = document.getElementById('create-blog-modal');
+      if (event.target === createBlogModal) {
+        closeCreateBlogModal();
+      }
+    }
+
+    // Load initial data
+    loadOverview();
+  </script>
+</body>
+</html>
