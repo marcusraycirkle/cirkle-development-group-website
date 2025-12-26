@@ -90,16 +90,16 @@ nav ul {
   margin: 0;
   padding: 0;
   margin-left: 0;
-  margin-right: 40px; /* Move nav buttons further left, away from staff-login */
+  margin-right: 20px;
   transition: transform 0.3s ease;
 }
 
 nav ul:hover {
-  transform: translateX(-5px);
+  transform: translateX(0);
 }
 
 nav li {
-  margin: 0 20px;
+  margin: 0 15px;
   position: relative;
   transition: transform 0.3s ease;
 }
@@ -155,30 +155,27 @@ nav a:hover {
 }
 
 .staff-login {
-  background: #6b46c1;
+  background: linear-gradient(135deg, #6b46c1 0%, #553c9a 100%);
   color: #fff;
-  padding: 12px 25px;
-  border-radius: 25px;
+  padding: 12px 28px;
+  border-radius: 30px;
   text-decoration: none;
   font-weight: 600;
-  box-shadow: 0 4px 15px rgba(107, 70, 193, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-  margin-left: 0;
-  font-size: 1rem;
-  animation: pulse 2s infinite;
+  box-shadow: 0 4px 20px rgba(107, 70, 193, 0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  margin-left: 10px;
+  margin-right: 10px;
+  font-size: 15px;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 .staff-login:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(107, 70, 193, 0.4);
-  background: #553c9a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(107, 70, 193, 0.5);
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-  100% { transform: scale(1); }
-}
+
 
 .page {
   display: none;
