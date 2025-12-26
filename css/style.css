@@ -59,10 +59,10 @@ header {
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 15px 20px;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 15px;
+  gap: 20px;
   z-index: 1000;
   transition: all 0.3s ease;
 }
@@ -85,13 +85,16 @@ header:hover {
   color: #553c9a;
 }
 
+nav {
+  display: flex;
+  justify-content: center;
+}
+
 nav ul {
   list-style: none;
   display: flex;
   margin: 0;
   padding: 0;
-  margin-left: auto;
-  margin-right: auto;
   gap: 5px;
   transition: transform 0.3s ease;
 }
@@ -122,6 +125,20 @@ nav a:hover {
   text-shadow: 0 0 5px rgba(107, 70, 193, 0.5);
 }
 
+.dropdown {
+  position: relative;
+}
+
+.dropdown::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: -10px;
+  right: -10px;
+  height: 20px;
+  background: transparent;
+}
+
 .dropdown-content {
   display: none;
   position: absolute;
@@ -129,22 +146,12 @@ nav a:hover {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   padding: 10px 0;
-  min-width: 180px;
-  top: calc(100% + 5px);
-  left: 0;
+  min-width: 200px;
+  top: calc(100% + 15px);
+  left: -10px;
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.dropdown-content::before {
-  content: '';
-  position: absolute;
-  top: -5px;
-  left: 0;
-  right: 0;
-  height: 5px;
-  background: transparent;
 }
 
 .dropdown:hover .dropdown-content {
@@ -171,6 +178,8 @@ nav a:hover {
   color: #fff;
   padding: 12px 24px;
   flex-shrink: 0;
+  justify-self: end;
+  margin-right: 0;
   border-radius: 30px;
   text-decoration: none;
   font-weight: 600;
@@ -609,23 +618,150 @@ footer a:hover {
 }
 
 @media (max-width: 768px) {
+  header {
+    grid-template-columns: 1fr;
+    padding: 10px 15px;
+    gap: 10px;
+  }
+
+  .logo {
+    font-size: 22px;
+    text-align: center;
+  }
+
+  nav {
+    order: 2;
+  }
+
   nav ul {
-    flex-direction: column;
-    align-items: center;
-    margin-left: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
   }
+
+  nav li {
+    margin: 0 5px;
+  }
+
+  nav a {
+    font-size: 14px;
+  }
+
+  .dropdown::after {
+    display: none;
+  }
+
   .dropdown-content {
-    position: static;
-    width: 100%;
-    box-shadow: none;
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    min-width: 200px;
+    max-width: 90vw;
   }
+
+  .dropdown:hover .dropdown-content {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .staff-login {
+    justify-self: center;
+    padding: 10px 20px;
+    font-size: 14px;
+    order: 3;
+  }
+
+  .slideshow {
+    height: 300px;
+  }
+
+  .banner-text {
+    font-size: 36px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+
   .stats, .exec-cards {
     flex-direction: column;
     align-items: center;
   }
+
   .stat-card, .exec-card {
     width: 100%;
+    max-width: 400px;
     margin-bottom: 20px;
+  }
+
+  .discord-box {
+    padding: 20px;
+  }
+
+  footer {
+    padding: 20px 10px;
+    font-size: 14px;
+  }
+
+  footer a {
+    display: block;
+    margin: 5px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  header {
+    padding: 8px 10px;
+  }
+
+  .logo {
+    font-size: 18px;
+  }
+
+  nav ul {
+    gap: 5px;
+  }
+
+  nav li {
+    margin: 0 3px;
+  }
+
+  nav a {
+    font-size: 12px;
+  }
+
+  .staff-login {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+
+  .slideshow {
+    height: 250px;
+  }
+
+  .banner-text {
+    font-size: 28px;
+  }
+
+  .content {
+    padding: 15px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  .page {
+    padding: 70px 10px 20px;
+  }
+}
   }
   .staff-login {
     padding: 10px 20px;

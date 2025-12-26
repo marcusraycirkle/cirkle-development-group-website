@@ -483,6 +483,7 @@
 
   .auth-box {
     max-width: 100%;
+    padding: 30px 20px;
   }
 
   .auth-header h1 {
@@ -496,6 +497,72 @@
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
+
+  .dashboard-card {
+    padding: 20px;
+  }
+
+  .user-profile {
+    padding: 6px 12px;
+  }
+
+  .profile-photo {
+    width: 30px;
+    height: 30px;
+  }
+
+  .profile-name {
+    font-size: 13px;
+  }
+
+  .modal-content {
+    width: 95%;
+    max-width: 500px;
+    margin: 5% auto;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-box {
+    padding: 25px 15px;
+  }
+
+  .auth-tabs {
+    gap: 10px;
+  }
+
+  .tab {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .auth-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .dashboard-card h2 {
+    font-size: 18px;
+  }
+
+  .user-profile {
+    gap: 8px;
+    padding: 5px 10px;
+  }
+
+  .profile-photo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .profile-name {
+    display: none;
+  }
+}
 
   .user-profile {
     padding: 6px 12px;
