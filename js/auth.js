@@ -51,6 +51,10 @@ class AuthManager {
       username: username,
       password: password, // In production, this should be hashed
       profilePhoto: profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=6b46c1&color=fff&size=128`,
+      pronouns: '',
+      bio: '',
+      followers: [],
+      following: [],
       createdAt: new Date().toISOString(),
       isAdmin: false,
       suspended: false
@@ -160,6 +164,48 @@ class AuthManager {
     if (hour < 18) return 'Good afternoon';
     return 'Good evening';
   }
+
+  // Follow/unfollow user
+  followUser(targetUserId) {
+    if (!this.currentUser || this.currentUser.id === targetUserId) {
+      return { success: false, message: 'Cannot follow yourself' };
+    }
+
+    const users = this.getUsers();
+    const currentUserIndex = users.findIndex(u => u.id === this.currentUser.id);
+    const targetUserIndex = users.findIndex(u => u.id === targetUserId);
+
+    if (currentUserIndex === -1 || targetUserIndex === -1) {
+      return { success: false, message: 'User not found' };
+    }
+
+    if (!users[currentUserIndex].following) users[currentUserIndex].following = [];
+    if (!users[targetUserIndex].followers) users[targetUserIndex].followers = [];
+
+    const isFollowing = users[currentUserIndex].following.includes(targetUserId);
+
+    if (isFollowing) {
+      // Unfollow
+      users[currentUserIndex].following = users[currentUserIndex].following.filter(id => id !== targetUserId);
+      users[targetUserIndex].followers = users[targetUserIndex].followers.filter(id => id !== this.currentUser.id);
+    } else {
+      // Follow
+      users[currentUserIndex].following.push(targetUserId);
+      users[targetUserIndex].followers.push(this.currentUser.id);
+    }
+
+    this.saveUsers(users);
+    this.currentUser = users[currentUserIndex];
+    localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+
+    return { success: true, isFollowing: !isFollowing };
+  }
+
+  // Get user by ID
+  getUserById(userId) {
+    const users = this.getUsers();
+    return users.find(u => u.id === userId);
+  }
 }
 
 // Blog Management System
@@ -251,15 +297,85 @@ class BlogManager {
     const newComment = {
       id: Date.now(),
       author: user.username,
+      authorId: user.id,
       authorPhoto: user.profilePhoto,
       content: comment,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      replies: []
     };
 
     blogs[blogIndex].comments.push(newComment);
     this.saveBlogs(blogs);
 
     return { success: true, comment: newComment };
+  }
+
+  // Add reply to comment
+  addReply(blogId, commentId, replyText, user) {
+    const blogs = this.getAllBlogs();
+    const blogIndex = blogs.findIndex(b => b.id === parseInt(blogId));
+
+    if (blogIndex === -1) {
+      return { success: false, message: 'Blog not found' };
+    }
+
+    const commentIndex = blogs[blogIndex].comments.findIndex(c => c.id === parseInt(commentId));
+    
+    if (commentIndex === -1) {
+      return { success: false, message: 'Comment not found' };
+    }
+
+    if (!blogs[blogIndex].comments[commentIndex].replies) {
+      blogs[blogIndex].comments[commentIndex].replies = [];
+    }
+
+    const newReply = {
+      id: Date.now(),
+      author: user.username,
+      authorId: user.id,
+      authorPhoto: user.profilePhoto,
+      content: replyText,
+      timestamp: new Date().toISOString()
+    };
+
+    blogs[blogIndex].comments[commentIndex].replies.push(newReply);
+    this.saveBlogs(blogs);
+
+    return { success: true, reply: newReply };
+  }
+
+  // Get all comments by user
+  getUserComments(userId) {
+    const blogs = this.getAllBlogs();
+    const userComments = [];
+
+    blogs.forEach(blog => {
+      blog.comments.forEach(comment => {
+        if (comment.authorId === userId) {
+          userComments.push({
+            ...comment,
+            blogTitle: blog.title,
+            blogId: blog.id
+          });
+        }
+        // Check replies too
+        if (comment.replies) {
+          comment.replies.forEach(reply => {
+            if (reply.authorId === userId) {
+              userComments.push({
+                ...reply,
+                blogTitle: blog.title,
+                blogId: blog.id,
+                isReply: true,
+                parentCommentAuthor: comment.author
+              });
+            }
+          });
+        }
+      });
+    });
+
+    return userComments.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }
 
   // Delete blog (admin only)

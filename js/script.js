@@ -178,18 +178,86 @@ function renderComments(comments) {
   return comments.map(comment => {
     const commentDate = new Date(comment.timestamp);
     const timeAgo = getTimeAgo(commentDate);
+    const replies = comment.replies || [];
 
     return `
       <div class="comment">
         <div class="comment-header">
-          <img src="${comment.authorPhoto}" alt="${comment.author}" class="comment-avatar">
-          <span class="comment-author">${comment.author}</span>
+          <img src="${comment.authorPhoto}" alt="${comment.author}" class="comment-avatar" style="cursor: pointer;" onclick="openUserProfile(${comment.authorId})">
+          <span class="comment-author" style="cursor: pointer;" onclick="openUserProfile(${comment.authorId})">${comment.author}</span>
           <span class="comment-time">${timeAgo}</span>
         </div>
         <div class="comment-content">${comment.content}</div>
+        ${auth.isLoggedIn() ? `
+          <button onclick="showReplyForm(${comment.id})" class="reply-btn" style="background: none; border: none; color: #6b46c1; cursor: pointer; font-size: 13px; margin-top: 8px;">Reply</button>
+          <div id="reply-form-${comment.id}" style="display: none; margin-top: 10px;">
+            <textarea id="reply-text-${comment.id}" placeholder="Write a reply..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; resize: vertical; min-height: 60px;"></textarea>
+            <div style="margin-top: 8px; display: flex; gap: 8px;">
+              <button onclick="submitReply(${comment.id})" class="comment-submit" style="padding: 8px 16px; font-size: 14px;">Post Reply</button>
+              <button onclick="hideReplyForm(${comment.id})" style="padding: 8px 16px; font-size: 14px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+            </div>
+            <div id="reply-message-${comment.id}" class="success-message" style="margin-top: 8px;"></div>
+          </div>
+        ` : ''}
+        ${replies.length > 0 ? `
+          <div class="replies" style="margin-left: 40px; margin-top: 15px; padding-left: 15px; border-left: 2px solid #e2e8f0;">
+            ${replies.map(reply => {
+              const replyDate = new Date(reply.timestamp);
+              const replyTimeAgo = getTimeAgo(replyDate);
+              return `
+                <div class="comment" style="margin-bottom: 10px;">
+                  <div class="comment-header">
+                    <img src="${reply.authorPhoto}" alt="${reply.author}" class="comment-avatar" style="width: 30px; height: 30px; cursor: pointer;" onclick="openUserProfile(${reply.authorId})">
+                    <span class="comment-author" style="cursor: pointer;" onclick="openUserProfile(${reply.authorId})">${reply.author}</span>
+                    <span class="comment-time">${replyTimeAgo}</span>
+                  </div>
+                  <div class="comment-content">${reply.content}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : ''}
       </div>
     `;
   }).join('');
+}
+
+function showReplyForm(commentId) {
+  document.getElementById(`reply-form-${commentId}`).style.display = 'block';
+}
+
+function hideReplyForm(commentId) {
+  document.getElementById(`reply-form-${commentId}`).style.display = 'none';
+  document.getElementById(`reply-text-${commentId}`).value = '';
+}
+
+function submitReply(commentId) {
+  const replyText = document.getElementById(`reply-text-${commentId}`);
+  const messageDiv = document.getElementById(`reply-message-${commentId}`);
+  
+  if (!replyText.value.trim()) {
+    messageDiv.textContent = 'Please write a reply';
+    messageDiv.className = 'error-message';
+    return;
+  }
+
+  const result = blogManager.addReply(currentBlogId, commentId, replyText.value, auth.currentUser);
+
+  if (result.success) {
+    messageDiv.textContent = 'Reply posted!';
+    messageDiv.className = 'success-message';
+    
+    setTimeout(() => {
+      loadBlogPost(currentBlogId);
+    }, 500);
+  } else {
+    messageDiv.textContent = result.message;
+    messageDiv.className = 'error-message';
+  }
+}
+
+function openUserProfile(userId) {
+  window.location.href = `consumer/dashboard.html?viewProfile=${userId}`;
 }
 
 function getTimeAgo(date) {

@@ -9,15 +9,15 @@
 </head>
 <body>
   <header>
-    <div class="logo" onclick="window.location.href='/'">Cirkle Development Group</div>
+    <div class="logo" onclick="window.location.href='../index.html'">Cirkle Development Group</div>
     <nav>
       <ul>
-        <li><a href="/#home">Home</a></li>
-        <li><a href="/blog.html">Blog</a></li>
-        <li><a href="/#contact">Contact</a></li>
+        <li><a href="../index.html#home">Home</a></li>
+        <li><a href="../index.html#blog">Blog</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
       </ul>
     </nav>
-    <a href="/consumer/login.html" class="staff-login">Consumer Login</a>
+    <a href="login.html" class="staff-login">Consumer Login</a>
   </header>
 
   <div class="dashboard-container">
@@ -26,29 +26,35 @@
       <p>Manage your account and interact with our content</p>
     </div>
 
-    <div class="dashboard-grid">
+    <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
       <div class="dashboard-card">
         <h2>📝 Blog Posts</h2>
-        <p>Read our latest blog posts and share your thoughts in the comments.</p>
-        <a href="/blog.html" class="dashboard-btn">View Blogs</a>
+        <p>Read our latest blog posts.</p>
+        <a href="../index.html#blog" class="dashboard-btn">View Blogs</a>
       </div>
 
       <div class="dashboard-card">
-        <h2>💡 Suggest a Blog</h2>
-        <p>Have an idea for a blog post? Share it with our team!</p>
-        <button onclick="openSuggestionModal()" class="dashboard-btn">Submit Suggestion</button>
+        <h2>💡 Suggest</h2>
+        <p>Share a blog post idea!</p>
+        <button onclick="openSuggestionModal()" class="dashboard-btn">Submit</button>
       </div>
 
       <div class="dashboard-card">
-        <h2>⚙️ Profile Settings</h2>
-        <p>Update your profile information and preferences.</p>
-        <button onclick="openSettingsModal()" class="dashboard-btn">Manage Profile</button>
+        <h2>⚙️ Profile</h2>
+        <p>Update your information.</p>
+        <button onclick="openSettingsModal()" class="dashboard-btn">Manage</button>
+      </div>
+
+      <div class="dashboard-card">
+        <h2>👥 Network</h2>
+        <p id="network-stats">Loading...</p>
+        <button onclick="openNetworkModal()" class="dashboard-btn">View</button>
       </div>
     </div>
 
     <div class="dashboard-card" style="margin-top: 20px;">
-      <h2>Your Recent Activity</h2>
-      <p id="activity-text">Your comments and suggestions will appear here.</p>
+      <h2>Your Recent Comments</h2>
+      <div id="recent-comments"></div>
     </div>
   </div>
 
@@ -89,6 +95,14 @@
           <input type="text" id="settings-username" readonly>
         </div>
         <div class="form-group">
+          <label>Pronouns (optional)</label>
+          <input type="text" id="settings-pronouns" placeholder="e.g., he/him, she/her, they/them">
+        </div>
+        <div class="form-group">
+          <label>Bio</label>
+          <textarea id="settings-bio" placeholder="Tell us about yourself..." rows="4"></textarea>
+        </div>
+        <div class="form-group">
           <label>Profile Photo URL</label>
           <input type="url" id="settings-photo" placeholder="Enter image URL">
           <small style="color: #718096; font-size: 13px; margin-top: 5px; display: block;">
@@ -100,6 +114,62 @@
         </div>
         <div id="settings-message" class="success-message"></div>
         <button onclick="saveSettings()" class="auth-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Network Modal -->
+  <div id="network-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Your Network</h2>
+        <button class="modal-close" onclick="closeNetworkModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+          <div style="flex: 1; text-align: center; padding: 15px; background: #f7fafc; border-radius: 8px;">
+            <h3 id="followers-count">0</h3>
+            <p style="color: #718096;">Followers</p>
+          </div>
+          <div style="flex: 1; text-align: center; padding: 15px; background: #f7fafc; border-radius: 8px;">
+            <h3 id="following-count">0</h3>
+            <p style="color: #718096;">Following</p>
+          </div>
+        </div>
+        <div id="network-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Profile Modal -->
+  <div id="profile-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="profile-modal-username">User Profile</h2>
+        <button class="modal-close" onclick="closeProfileModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+          <img id="profile-modal-photo" src="" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #6b46c1;">
+          <div style="flex: 1;">
+            <h3 id="profile-modal-name" style="margin: 0;"></h3>
+            <p id="profile-modal-pronouns" style="color: #718096; margin: 5px 0;"></p>
+            <button id="follow-btn" onclick="toggleFollow()" class="dashboard-btn" style="margin-top: 10px;"></button>
+          </div>
+        </div>
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px; flex: 1;">
+            <strong id="profile-modal-followers">0</strong>
+            <p style="color: #718096; font-size: 13px; margin: 0;">Followers</p>
+          </div>
+          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px; flex: 1;">
+            <strong id="profile-modal-following">0</strong>
+            <p style="color: #718096; font-size: 13px; margin: 0;">Following</p>
+          </div>
+        </div>
+        <div id="profile-modal-bio" style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
+        <h3>Recent Comments</h3>
+        <div id="profile-modal-comments"></div>
       </div>
     </div>
   </div>
@@ -125,6 +195,57 @@
 
     // Update header
     updateHeader();
+
+    // Load network stats
+    loadNetworkStats();
+
+    // Load recent comments
+    loadRecentComments();
+
+    // Check if viewing another user's profile
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewProfileId = urlParams.get('viewProfile');
+    if (viewProfileId) {
+      setTimeout(() => openUserProfile(parseInt(viewProfileId)), 100);
+    }
+
+    // Load network stats
+    function loadNetworkStats() {
+      const followers = auth.currentUser.followers || [];
+      const following = auth.currentUser.following || [];
+      document.getElementById('network-stats').textContent = `${followers.length} Followers • ${following.length} Following`;
+    }
+
+    // Load recent comments
+    function loadRecentComments() {
+      const comments = blogManager.getUserComments(auth.currentUser.id);
+      const commentsDiv = document.getElementById('recent-comments');
+      
+      if (comments.length === 0) {
+        commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No comments yet. Start engaging with our blog posts!</p>';
+        return;
+      }
+
+      commentsDiv.innerHTML = comments.slice(0, 5).map(comment => `
+        <div style="padding: 15px; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="window.location.href='../index.html#blog-post?id=${comment.blogId}'">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+            <strong style="color: #6b46c1;">${comment.blogTitle}</strong>
+            <small style="color: #718096;">${getTimeAgo(new Date(comment.timestamp))}</small>
+          </div>
+          ${comment.isReply ? `<p style="font-size: 13px; color: #718096; margin: 5px 0;">Reply to ${comment.parentCommentAuthor}</p>` : ''}
+          <p style="color: #4a5568; margin: 0;">${comment.content}</p>
+        </div>
+      `).join('');
+    }
+
+    function getTimeAgo(date) {
+      const seconds = Math.floor((new Date() - date) / 1000);
+      if (seconds < 60) return 'Just now';
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+      if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+      return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    }
 
     // Suggestion Modal Functions
     function openSuggestionModal() {
@@ -159,6 +280,8 @@
     function openSettingsModal() {
       document.getElementById('settings-modal').classList.add('active');
       document.getElementById('settings-username').value = auth.currentUser.username;
+      document.getElementById('settings-pronouns').value = auth.currentUser.pronouns || '';
+      document.getElementById('settings-bio').value = auth.currentUser.bio || '';
       document.getElementById('settings-photo').value = auth.currentUser.profilePhoto;
       document.getElementById('settings-message').textContent = '';
       updateProfilePreview();
@@ -185,10 +308,14 @@
 
     function saveSettings() {
       const photoUrl = document.getElementById('settings-photo').value;
+      const pronouns = document.getElementById('settings-pronouns').value;
+      const bio = document.getElementById('settings-bio').value;
       const messageDiv = document.getElementById('settings-message');
 
       const updates = {
-        profilePhoto: photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(auth.currentUser.username)}&background=6b46c1&color=fff&size=128`
+        profilePhoto: photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(auth.currentUser.username)}&background=6b46c1&color=fff&size=128`,
+        pronouns: pronouns,
+        bio: bio
       };
 
       const result = auth.updateProfile(auth.currentUser.id, updates);
@@ -202,17 +329,133 @@
       }
     }
 
+    // Network Modal Functions
+    let currentProfileUserId = null;
+
+    function openNetworkModal() {
+      document.getElementById('network-modal').classList.add('active');
+      loadNetwork();
+    }
+
+    function closeNetworkModal() {
+      document.getElementById('network-modal').classList.remove('active');
+    }
+
+    function loadNetwork() {
+      const followers = (auth.currentUser.followers || []).map(id => auth.getUserById(id)).filter(u => u);
+      const following = (auth.currentUser.following || []).map(id => auth.getUserById(id)).filter(u => u);
+      
+      document.getElementById('followers-count').textContent = followers.length;
+      document.getElementById('following-count').textContent = following.length;
+
+      const networkList = document.getElementById('network-list');
+      
+      if (followers.length === 0 && following.length === 0) {
+        networkList.innerHTML = '<p style="text-align: center; color: #718096; padding: 20px;">No connections yet. Start following users!</p>';
+        return;
+      }
+
+      let html = '';
+      
+      if (following.length > 0) {
+        html += '<h3>Following</h3>';
+        html += following.map(user => `
+          <div style="display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="openUserProfile(${user.id})">
+            <img src="${user.profilePhoto}" alt="${user.username}" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+            <div>
+              <strong>${user.username}</strong>
+              ${user.pronouns ? `<p style="color: #718096; font-size: 13px; margin: 0;">${user.pronouns}</p>` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      if (followers.length > 0) {
+        html += '<h3 style="margin-top: 20px;">Followers</h3>';
+        html += followers.map(user => `
+          <div style="display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="openUserProfile(${user.id})">
+            <img src="${user.profilePhoto}" alt="${user.username}" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+            <div>
+              <strong>${user.username}</strong>
+              ${user.pronouns ? `<p style="color: #718096; font-size: 13px; margin: 0;">${user.pronouns}</p>` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      networkList.innerHTML = html;
+    }
+
+    // Profile Modal Functions
+    function openUserProfile(userId) {
+      const user = auth.getUserById(userId);
+      if (!user) return;
+
+      currentProfileUserId = userId;
+      const isFollowing = (auth.currentUser.following || []).includes(userId);
+
+      document.getElementById('profile-modal-username').textContent = user.username;
+      document.getElementById('profile-modal-photo').src = user.profilePhoto;
+      document.getElementById('profile-modal-name').textContent = user.username;
+      document.getElementById('profile-modal-pronouns').textContent = user.pronouns || '';
+      document.getElementById('profile-modal-pronouns').style.display = user.pronouns ? 'block' : 'none';
+      document.getElementById('profile-modal-followers').textContent = (user.followers || []).length;
+      document.getElementById('profile-modal-following').textContent = (user.following || []).length;
+      document.getElementById('profile-modal-bio').innerHTML = user.bio ? `<p>${user.bio}</p>` : '<p style="color: #718096; font-style: italic;">No bio yet</p>';
+      document.getElementById('follow-btn').textContent = isFollowing ? 'Unfollow' : 'Follow';
+      
+      // Load user's comments
+      const userComments = blogManager.getUserComments(userId);
+      const commentsDiv = document.getElementById('profile-modal-comments');
+      
+      if (userComments.length === 0) {
+        commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No comments yet</p>';
+      } else {
+        commentsDiv.innerHTML = userComments.slice(0, 5).map(comment => `
+          <div style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
+            <a href="../index.html#blog-post?id=${comment.blogId}" style="color: #6b46c1; font-weight: 600; text-decoration: none;">${comment.blogTitle}</a>
+            ${comment.isReply ? `<p style="font-size: 13px; color: #718096; margin: 5px 0;">Reply to ${comment.parentCommentAuthor}</p>` : ''}
+            <p style="color: #4a5568; margin: 5px 0;">${comment.content}</p>
+            <small style="color: #718096;">${getTimeAgo(new Date(comment.timestamp))}</small>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('profile-modal').classList.add('active');
+    }
+
+    function closeProfileModal() {
+      document.getElementById('profile-modal').classList.remove('active');
+      currentProfileUserId = null;
+    }
+
+    function toggleFollow() {
+      if (!currentProfileUserId) return;
+      
+      const result = auth.followUser(currentProfileUserId);
+      if (result.success) {
+        document.getElementById('follow-btn').textContent = result.isFollowing ? 'Unfollow' : 'Follow';
+        loadNetworkStats();
+        
+        // Update follower count in modal
+        const user = auth.getUserById(currentProfileUserId);
+        if (user) {
+          document.getElementById('profile-modal-followers').textContent = (user.followers || []).length;
+        }
+      }
+    }
+
     // Close modals when clicking outside
     window.onclick = function(event) {
       const suggestionModal = document.getElementById('suggestion-modal');
       const settingsModal = document.getElementById('settings-modal');
+      const networkModal = document.getElementById('network-modal');
+      const profileModal = document.getElementById('profile-modal');
       
-      if (event.target === suggestionModal) {
-        closeSuggestionModal();
-      }
-      if (event.target === settingsModal) {
-        closeSettingsModal();
-      }
+      if (event.target === suggestionModal) closeSuggestionModal();
+      if (event.target === settingsModal) closeSettingsModal();
+      if (event.target === networkModal) closeNetworkModal();
+      if (event.target === profileModal) closeProfileModal();
     }
   </script>
 </body>
