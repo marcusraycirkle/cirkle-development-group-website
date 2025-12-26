@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cirkle Development Group</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/blog.css">
 </head>
 <body>
   <header>
@@ -12,7 +14,7 @@
     <nav>
       <ul>
         <li><a href="#home">Home</a></li>
-        <li><a href="blog.html">Blog</a></li>
+        <li><a href="#blog">Blog</a></li>
         <li class="dropdown">
           <a href="#">About Us</a>
           <div class="dropdown-content">
@@ -182,6 +184,38 @@
       <img src="https://i.imgur.com/V6xIHcR.jpg" alt="DevDen Logo" width="100">
       <br>
       <a href="https://marcusraycirkle.github.io/cirkle-development-group-website/#subs-devden" class="discord-btn">Discord Coming Soon</a>
+    </div>
+  </div>
+
+  <!-- Blog -->
+  <div id="blog" class="page">
+    <div class="blog-hero">
+      <h1>Our Blog</h1>
+      <p>Stay updated with the latest news and insights from Cirkle Development Group</p>
+    </div>
+    <div class="blog-container">
+      <div id="blog-grid" class="blog-grid">
+        <!-- Blog posts will be dynamically loaded here -->
+      </div>
+      <div id="no-blogs" class="no-blogs" style="display: none;">
+        <h2>No blog posts yet</h2>
+        <p>Check back soon for new content!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blog Post -->
+  <div id="blog-post" class="page">
+    <div class="blog-post-container">
+      <a href="#blog" class="back-to-blog">← Back to Blog</a>
+      <div id="blog-content">
+        <!-- Blog content will be loaded here -->
+      </div>
+      <div id="blog-not-found" style="display: none; text-align: center; padding: 60px 20px;">
+        <h2>Blog Post Not Found</h2>
+        <p>The blog post you're looking for doesn't exist.</p>
+        <a href="#blog" class="dashboard-btn">View All Blogs</a>
+      </div>
     </div>
   </div>
 
