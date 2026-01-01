@@ -1,6 +1,95 @@
-# 🎉 All Changes Committed & Deployed!
+# 🚀 Cloudflare Deployment Summary
 
-## ✅ What's Been Completed
+## ⚠️ **IMPORTANT: Worker NOT Deployed Yet**
+
+The backend code is ready, but you still need to deploy it to Cloudflare!
+
+## What's Been Completed
+
+### Backend Code ✅
+- Cloudflare Worker with full API endpoints
+- Discord OAuth 2.0 integration
+- MyCirkle membership verification
+- KV storage configuration
+- Session management with JWT
+
+### Admin System ✅
+These Discord users get automatic admin privileges when they sign up:
+- **Marcus Ray** - Discord ID: `1088907566844739624`
+- **Teejay Everil** - Discord ID: `926568979747713095`  
+- **Sam Caster** - Discord ID: `1187751127039615086`
+- **Appler Smith** - Discord ID: `1002932344799371354`
+
+### Integration ✅
+- MyCirkle API: `https://mycirkle-auth.marcusray.workers.dev/api/verify-membership`
+- Frontend API client ready
+- Badge display system implemented
+
+---
+
+## 🎯 Quick Deployment (5 Minutes)
+
+### 1. Install Wrangler
+```bash
+npm install -g wrangler
+wrangler login
+```
+
+### 2. Create KV Namespaces
+```bash
+wrangler kv:namespace create "USERS"
+wrangler kv:namespace create "SESSIONS"  
+wrangler kv:namespace create "BLOGS"
+wrangler kv:namespace create "BLOG_SUGGESTIONS"
+```
+
+**Important:** Copy the returned IDs and update them in [wrangler.toml](wrangler.toml)
+
+### 3. Set Discord OAuth Credentials
+
+Get these from: https://discord.com/developers/applications
+
+```bash
+wrangler secret put DISCORD_CLIENT_ID
+# Enter your Discord OAuth Client ID
+
+wrangler secret put DISCORD_CLIENT_SECRET
+# Enter your Discord OAuth Client Secret
+
+wrangler secret put DISCORD_REDIRECT_URI
+# Enter: https://cirkledevelopment.co.uk/consumer/login.html
+```
+
+### 4. Generate JWT Secret
+```bash
+openssl rand -base64 32
+# Copy the output, then:
+wrangler secret put JWT_SECRET
+# Paste the generated secret
+```
+
+### 5. Deploy
+```bash
+wrangler deploy
+```
+
+### 6. Test
+```bash
+curl https://cirkledevelopment.co.uk/api/health
+# Should return: {"status":"ok","timestamp":...}
+```
+
+---
+
+## 📚 Full Documentation
+
+- **Step-by-Step Guide**: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Complete deployment instructions
+- **Cloudflare Setup**: [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md) - Quick reference
+- **Admin Info**: [ADMIN_ACCOUNTS.md](ADMIN_ACCOUNTS.md) - Admin user details
+
+---
+
+## Previous Features (Already Live)
 
 ### 1. **Authentication System**
 - ✅ Consumer signup/login with validation

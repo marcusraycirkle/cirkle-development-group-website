@@ -1,27 +1,31 @@
 # Admin Accounts Quick Reference
 
-## Pre-configured Admin Accounts
+## Admin Users (Discord OAuth)
 
-All admin accounts are automatically created when you first visit the site.
+The following Discord users automatically receive admin privileges when they sign up:
 
-### Account Details
+### Admin Discord IDs
 
-| Name | Username | Password | Role |
-|------|----------|----------|------|
-| Teejay Everil | teejayeveril | admin2025 | Admin & Content Creator |
-| Sam | sam | admin2025 | Admin & Content Creator |
-| Caster | caster | admin2025 | Admin & Content Creator |
-| Marcus Ray | marcusray | admin2025 | Admin & Content Creator |
-| Appler Smith | applersmith | admin2025 | Admin & Content Creator |
+| Name | Discord ID | Auto-Admin |
+|------|-----------|------------|
+| Marcus Ray | 1088907566844739624 | ✅ |
+| Teejay Everil | 926568979747713095 | ✅ |
+| Sam Caster | 1187751127039615086 | ✅ |
+| Appler Smith | 1002932344799371354 | ✅ |
 
-### Login Instructions
+### How It Works
 
-1. Go to the Consumer Login page
-2. Enter username (lowercase, no spaces)
-3. Enter password: `admin2025`
-4. Click Login
+1. When these users sign up via Discord OAuth, the system automatically:
+   - Creates their account
+   - Sets `isAdmin: true`
+   - Grants full admin privileges
+   - Allows blog creation and management
 
-You'll be redirected to the Admin Dashboard where you can:
+2. No special login required - just use "Login with Discord" button
+
+3. Admin features unlock automatically upon login
+
+### Admin Capabilities
 - Create new blog posts
 - Manage content
 - View user activity
@@ -30,14 +34,18 @@ You'll be redirected to the Admin Dashboard where you can:
 ### Public Profile Features
 
 All admin accounts have:
-- ✅ Public profiles that can be viewed by any user
-- ✅ Clickable names in blog posts and comments
-- ✅ Pre-configured bios
-- ✅ Default profile pictures
-- ✅ Activity tracking
-- ✅ Social networking features (followers, following)
+Admins can:
+- ✅ Create and publish blog posts
+- ✅ Manage all content
+- ✅ View user activity and analytics
+- ✅ Access admin dashboard
+- ✅ Have public profiles visible to all users
+- ✅ Get clickable author attribution in blogs
+- ✅ Use all social networking features
 
-### Creating Blog Posts as Admin
+### Security Note
+
+Admin status is hardcoded by Discord ID in the Cloudflare Worker. To add/remove admins, update the `ADMIN_DISCORD_IDS` array in [worker.js](worker.js) and redeploy.
 
 1. Login with admin credentials
 2. Navigate to Admin Dashboard

@@ -3,6 +3,14 @@
  * Handles authentication, user data, and MyCirkle integration
  */
 
+// Admin Discord IDs - these users get admin privileges automatically
+const ADMIN_DISCORD_IDS = [
+  '1088907566844739624', // Marcus Ray
+  '926568979747713095',  // Teejay Everil
+  '1187751127039615086', // Sam Caster
+  '1002932344799371354', // Appler Smith
+];
+
 // CORS headers for cross-origin requests
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -202,6 +210,9 @@ const routes = {
       user.lastLogin = new Date().toISOString();
     } else {
       // New user - create account (pending bio and MyCirkle verification)
+      // Check if user is an admin
+      const isAdmin = ADMIN_DISCORD_IDS.includes(discordUser.id);
+      
       user = {
         id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         username: discordUser.username.toLowerCase().replace(/\s+/g, '_'),
@@ -219,7 +230,7 @@ const routes = {
         myCirkleTier: null,
         followers: [],
         following: [],
-        isAdmin: false,
+        isAdmin: isAdmin,
         suspended: false,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
