@@ -104,6 +104,12 @@ class APIClient {
     });
   }
 
+  async deleteAccount() {
+    return await this.request('/users/me', {
+      method: 'DELETE',
+    });
+  }
+
   async getUserById(userId) {
     return await this.request(`/users/${userId}`);
   }

@@ -272,7 +272,6 @@ function openUserProfile(userId) {
     window.location.href = 'consumer/login.html';
   }
 }
-}
 
 function getTimeAgo(date) {
   const seconds = Math.floor((new Date() - date) / 1000);

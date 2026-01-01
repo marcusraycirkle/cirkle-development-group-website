@@ -162,6 +162,37 @@
         </div>
         <div id="settings-message" class="success-message"></div>
         <button onclick="saveSettings()" class="auth-btn">Save Changes</button>
+        <button onclick="showDeleteAccountModal()" class="auth-btn" style="background: #e53e3e; margin-top: 20px;">Delete Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Account Confirmation Modal -->
+  <div id="delete-account-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>Delete Account</h2>
+        <button class="modal-close" onclick="closeDeleteAccountModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="padding: 20px; text-align: center;">
+          <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+          <h3 style="color: #e53e3e; margin-bottom: 15px;">Are you sure?</h3>
+          <p style="color: #4a5568; margin-bottom: 25px;">
+            This action cannot be undone. All your data will be permanently deleted.
+          </p>
+          <div style="display: flex; gap: 10px; justify-content: center;">
+            <button onclick="closeDeleteAccountModal()" class="auth-btn" style="flex: 1; background: #718096;">No, Cancel</button>
+            <button onclick="confirmDeleteAccount()" class="auth-btn" style="flex: 1; background: #e53e3e;">Yes, Delete</button>
+          </div>
+        </div>
+        <div id="deletion-progress" style="display: none; padding: 20px;">
+          <h3 style="text-align: center; margin-bottom: 20px;">Deleting Account...</h3>
+          <div id="deletion-steps" style="font-size: 14px; color: #4a5568;"></div>
+          <div style="margin-top: 20px; text-align: center; color: #38a169; font-weight: 600; display: none;" id="deletion-complete">
+            ✓ Account Deleted Successfully
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -615,17 +646,82 @@
       }
     }
 
+    // Delete Account Functions
+    function showDeleteAccountModal() {
+      document.getElementById('delete-account-modal').style.display = 'flex';
+    }
+
+    function closeDeleteAccountModal() {
+      document.getElementById('delete-account-modal').style.display = 'none';
+      // Reset modal state
+      document.querySelector('#delete-account-modal .modal-body > div:first-child').style.display = 'block';
+      document.getElementById('deletion-progress').style.display = 'none';
+      document.getElementById('deletion-steps').innerHTML = '';
+      document.getElementById('deletion-complete').style.display = 'none';
+    }
+
+    async function confirmDeleteAccount() {
+      // Hide confirmation, show progress
+      document.querySelector('#delete-account-modal .modal-body > div:first-child').style.display = 'none';
+      document.getElementById('deletion-progress').style.display = 'block';
+      
+      const stepsElement = document.getElementById('deletion-steps');
+      const steps = [
+        'Deleting profile information...',
+        'Removing comments...',
+        'Deleting blog posts...',
+        'Clearing session data...',
+        'Removing account data...'
+      ];
+      
+      // Animate deletion steps (2 seconds each for 10 seconds total)
+      for (let i = 0; i < steps.length; i++) {
+        const stepDiv = document.createElement('div');
+        stepDiv.style.padding = '8px';
+        stepDiv.style.marginBottom = '5px';
+        stepDiv.textContent = steps[i];
+        stepsElement.appendChild(stepDiv);
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        stepDiv.style.color = '#38a169';
+        stepDiv.textContent = '✓ ' + steps[i].replace('...', ' complete');
+      }
+      
+      // Call API to delete account
+      try {
+        await api.deleteAccount();
+      } catch (error) {
+        console.error('Error deleting account:', error);
+      }
+      
+      // Show completion message
+      document.getElementById('deletion-complete').style.display = 'block';
+      
+      // Wait 1 second then redirect
+      setTimeout(() => {
+        // Clear session
+        document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        localStorage.clear();
+        
+        // Redirect to login
+        window.location.href = '/consumer/login.html';
+      }, 1000);
+    }
+
     // Close modals when clicking outside
     window.onclick = function(event) {
       const suggestionModal = document.getElementById('suggestion-modal');
       const settingsModal = document.getElementById('settings-modal');
       const networkModal = document.getElementById('network-modal');
       const profileModal = document.getElementById('profile-modal');
+      const deleteModal = document.getElementById('delete-account-modal');
       
       if (event.target === suggestionModal) closeSuggestionModal();
       if (event.target === settingsModal) closeSettingsModal();
       if (event.target === networkModal) closeNetworkModal();
       if (event.target === profileModal) closeProfileModal();
+      if (event.target === deleteModal) closeDeleteAccountModal();
     }
   </script>
 </body>

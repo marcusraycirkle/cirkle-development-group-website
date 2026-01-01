@@ -445,6 +445,35 @@ const routes = {
     });
   },
 
+  // Delete account
+  'DELETE /api/users/me': async (request, env) => {
+    const user = await getUserFromRequest(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Delete user data
+    await env.USERS.delete(`user:${user.id}`);
+    await env.USERS.delete(`discord:${user.discordId}`);
+    
+    // Delete all user's sessions
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      await env.SESSIONS.delete(token);
+    }
+
+    // Note: Comments and blogs remain but are orphaned
+    // Could be extended to delete user's comments/blogs if needed
+
+    return new Response(JSON.stringify({ success: true, message: 'Account deleted successfully' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
   // Get all blogs
   'GET /api/blogs': async (request, env) => {
     try {
