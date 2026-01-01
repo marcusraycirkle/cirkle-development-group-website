@@ -208,8 +208,8 @@ const routes = {
     const result = await handleDiscordOAuth(env, code);
     if (!result || result.error) {
       return new Response(JSON.stringify({ 
-        error: result?.error || 'Discord authentication failed',
-        details: result?.details 
+        error: (result && result.error) || 'Discord authentication failed',
+        details: result && result.details 
       }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
