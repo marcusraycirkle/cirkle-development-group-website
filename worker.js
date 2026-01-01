@@ -80,6 +80,8 @@ async function getAuthUser(request, env) {
 // Discord OAuth Handler
 async function handleDiscordOAuth(env, code) {
   try {
+    console.log('Starting Discord OAuth with code:', code.substring(0, 10) + '...');
+    
     // Exchange code for access token
     const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
@@ -96,7 +98,9 @@ async function handleDiscordOAuth(env, code) {
     });
 
     if (!tokenResponse.ok) {
-      throw new Error('Failed to exchange code for token');
+      const errorData = await tokenResponse.text();
+      console.error('Discord token exchange failed:', tokenResponse.status, errorData);
+      throw new Error(`Failed to exchange code for token: ${tokenResponse.status} - ${errorData}`);
     }
 
     const tokenData = await tokenResponse.json();

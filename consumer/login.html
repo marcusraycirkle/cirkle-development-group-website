@@ -191,6 +191,10 @@
     }
 
     async function handleOAuthCallback(code) {
+      const errorDiv = document.getElementById('auth-error');
+      errorDiv.textContent = 'Authenticating with Discord...';
+      errorDiv.style.color = '#4a5568';
+      
       try {
         const result = await api.handleDiscordCallback(code);
         currentUserData = result.user;
@@ -202,7 +206,10 @@
           // Show MyCirkle verification for new users
           showMyCirkleModal();
         } else {
-          // Existing user - go to dashboard
+        console.error('OAuth callback error:', error);
+        const errorDiv = document.getElementById('auth-error');
+        errorDiv.style.color = '#e53e3e';
+        errorDiv.textContent = error.message || 'Discord authentication failed. Please make sure the Discord redirect URI is set to: https://group.cirkledevelopment.co.uk/consumer/login.html
           redirectToDashboard(result.user);
         }
       } catch (error) {
