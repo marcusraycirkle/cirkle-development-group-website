@@ -408,10 +408,13 @@
         blogsAuthored: 0
       };
       
-      document.getElementById('stat-blogs-interacted').textContent = stats.blogsInteracted || 0;
-      document.getElementById('stat-blogs-suggested').textContent = stats.blogsSuggested || 0;
-      document.getElementById('stat-comments-posted').textContent = stats.commentsPosted || 0;
-      document.getElementById('stat-blogs-authored').textContent = stats.blogsAuthored || 0;
+      const blogsInteractedEl = document.getElementById('stat-blogs-interacted');
+      const blogsSuggestedEl = document.getElementById('stat-blogs-suggested');
+      const commentsPostedEl = document.getElementById('stat-comments-posted');
+      
+      if (blogsInteractedEl) blogsInteractedEl.textContent = stats.blogsInteracted || 0;
+      if (blogsSuggestedEl) blogsSuggestedEl.textContent = stats.blogsSuggested || 0;
+      if (commentsPostedEl) commentsPostedEl.textContent = stats.commentsPosted || 0;
     }
 
     // Load network stats
