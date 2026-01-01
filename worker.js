@@ -278,10 +278,13 @@ const routes = {
     await env.USERS.put(`user:${user.id}`, JSON.stringify(user));
     await env.USERS.put(`discord:${discordUser.id}`, JSON.stringify(user));
 
+    // Check if user needs onboarding (no bio = new user or returning after deletion)
+    const needsOnboarding = !user.bio || user.bio === '';
+
     return new Response(JSON.stringify({
       sessionId: sessionId,
       user: user,
-      isNewUser: !existingUserData,
+      isNewUser: needsOnboarding,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

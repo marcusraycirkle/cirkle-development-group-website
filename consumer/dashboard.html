@@ -43,14 +43,15 @@
       <p>Manage your account and interact with our content</p>
     </div>
 
-    <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+    <!-- Main Dashboard Grid (3x3 layout) -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px;">
       <div class="dashboard-card">
         <h2>📝 Blog Posts</h2>
         <p>Read our latest blog posts.</p>
         <a href="../index.html#blog" class="dashboard-btn">View Blogs</a>
       </div>
 
-      <div class="dashboard-card">
+      <div class="dashboard-card" id="suggest-or-post-card">
         <h2>💡 Suggest</h2>
         <p>Share a blog post idea!</p>
         <button onclick="openSuggestionModal()" class="dashboard-btn">Submit</button>
@@ -67,34 +68,31 @@
         <p id="network-stats">Loading...</p>
         <button onclick="openNetworkModal()" class="dashboard-btn">View</button>
       </div>
-    </div>
 
-    <!-- Activity Stats Section -->
-    <div class="dashboard-card" style="margin-bottom: 20px;">
-      <h2>Your Activity</h2>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
-        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white;">
-          <div style="font-size: 32px; font-weight: bold;" id="stat-blogs-interacted">0</div>
-          <div style="font-size: 14px; opacity: 0.9;">Interacted with blogs</div>
-        </div>
-        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 10px; color: white;">
-          <div style="font-size: 32px; font-weight: bold;" id="stat-blogs-suggested">0</div>
-          <div style="font-size: 14px; opacity: 0.9;">Suggested blogs</div>
-        </div>
-        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 10px; color: white;">
-          <div style="font-size: 32px; font-weight: bold;" id="stat-comments-posted">0</div>
-          <div style="font-size: 14px; opacity: 0.9;">Comments posted</div>
-        </div>
-        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); border-radius: 10px; color: white;">
-          <div style="font-size: 32px; font-weight: bold;" id="stat-blogs-authored">0</div>
-          <div style="font-size: 14px; opacity: 0.9;">Blogs authored</div>
-        </div>
+      <div class="dashboard-card" style="text-align: center; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div style="font-size: 42px; font-weight: bold; margin-bottom: 10px;" id="stat-blogs-interacted">0</div>
+        <div style="font-size: 16px; opacity: 0.95;">Blogs Interacted</div>
       </div>
-    </div>
 
-    <div class="dashboard-card" style="margin-top: 20px;">
-      <h2>Your Recent Comments</h2>
-      <div id="recent-comments"></div>
+      <div class="dashboard-card" style="text-align: center; padding: 25px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+        <div style="font-size: 42px; font-weight: bold; margin-bottom: 10px;" id="stat-blogs-suggested">0</div>
+        <div style="font-size: 16px; opacity: 0.95;">Blog Suggestions</div>
+      </div>
+
+      <div class="dashboard-card" style="text-align: center; padding: 25px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+        <div style="font-size: 42px; font-weight: bold; margin-bottom: 10px;" id="stat-comments-posted">0</div>
+        <div style="font-size: 16px; opacity: 0.95;">Comments Posted</div>
+      </div>
+
+      <div class="dashboard-card" style="text-align: center; padding: 25px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+        <div style="font-size: 42px; font-weight: bold; margin-bottom: 10px;" id="stat-blogs-authored">0</div>
+        <div style="font-size: 16px; opacity: 0.95;">Blogs Authored</div>
+      </div>
+
+      <div class="dashboard-card" style="grid-column: span 3;">
+        <h2>Your Recent Comments</h2>
+        <div id="recent-comments"></div>
+      </div>
     </div>
   </div>
 
@@ -299,6 +297,18 @@
       const username = currentUser.username;
       const adminBadge = isAdmin ? ' <span style="display: inline-flex; align-items: center; background: #3b82f6; color: white; padding: 4px 10px; border-radius: 12px; font-size: 14px; font-weight: 600; margin-left: 8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" style="margin-right: 4px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Admin</span>' : '';
       greetingText.innerHTML = `Hello, ${username}!${adminBadge}`;
+      
+      // Update the suggest/post card for admin users
+      if (isAdmin) {
+        const card = document.getElementById('suggest-or-post-card');
+        if (card) {
+          card.innerHTML = `
+            <h2>✍️ Post Blog</h2>
+            <p>Create a new blog post!</p>
+            <button onclick="window.location.href='../index.html#blog'" class="dashboard-btn">Create Post</button>
+          `;
+        }
+      }
     }
 
     // Initialize dashboard

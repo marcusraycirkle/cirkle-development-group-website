@@ -552,7 +552,9 @@ async function updateHeader() {
       const user = await api.getCurrentUser();
       
       if (staffLoginBtn) staffLoginBtn.style.display = 'none';
-      if (userProfileBtn) userProfileBtn.remove();
+      
+      // Remove all existing profile elements to prevent duplicates
+      document.querySelectorAll('.user-profile').forEach(el => el.remove());
       
       const profileHTML = `
         <div class="user-profile">
