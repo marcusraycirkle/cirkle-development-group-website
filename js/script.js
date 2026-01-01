@@ -75,19 +75,22 @@ function loadBlogs() {
       year: 'numeric' 
     });
 
+    // Create excerpt (first 150 characters)
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = blog.content;
+    const excerpt = (tempDiv.textContent || tempDiv.innerText || '').substring(0, 150) + '...';
+
     blogCard.innerHTML = `
-      <div class="blog-card-image" style="background-image: url('${blog.thumbnailImage}');">
-        <div class="blog-card-overlay">
-          <h2>${blog.title}</h2>
-        </div>
-      </div>
+      <img class="blog-card-image" src="${blog.thumbnailImage}" alt="${blog.title}" onerror="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22220%22%3E%3Crect fill=%22%23667eea%22 width=%22400%22 height=%22220%22/%3E%3C/svg%3E'">
       <div class="blog-card-content">
-        <div class="blog-meta">
-          <span class="blog-author">By ${blog.author}</span>
-          <span class="blog-date">${formattedDate}</span>
-        </div>
-        <div class="blog-comments">
-          💬 ${blog.comments.length} ${blog.comments.length === 1 ? 'comment' : 'comments'}
+        <h3 class="blog-card-title">${blog.title}</h3>
+        <p class="blog-card-excerpt">${excerpt}</p>
+        <div class="blog-card-meta">
+          <div>
+            <span class="blog-author" onclick="event.stopPropagation(); alert('Author profiles coming soon!')">By ${blog.author}</span>
+            <span class="blog-date"> • ${formattedDate}</span>
+          </div>
+          <span class="blog-comments">💬 ${blog.comments.length}</span>
         </div>
       </div>
     `;
