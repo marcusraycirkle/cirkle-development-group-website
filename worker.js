@@ -100,7 +100,16 @@ async function handleDiscordOAuth(env, code) {
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
       console.error('Discord token exchange failed:', tokenResponse.status, errorData);
-      throw new Error(`Failed to exchange code for token: ${tokenResponse.status} - ${errorData}`);
+      let parsedError;
+      try {
+        parsedError = JSON.parse(errorData);
+      } catch (e) {
+        parsedError = { message: errorData };
+      }
+      return { 
+        error: `Discord OAuth failed: ${parsedError.error || 'Unknown error'}`,
+        details: parsedError.error_description || errorData
+      };
     }
 
     const tokenData = await tokenResponse.json();
@@ -128,7 +137,7 @@ async function handleDiscordOAuth(env, code) {
     };
   } catch (error) {
     console.error('Discord OAuth error:', error);
-    return null;
+    return { error: 'Unexpected error during Discord authentication', details: error.message };
   }
 }
 
@@ -196,13 +205,18 @@ const routes = {
   'POST /api/auth/discord/callback': async (request, env) => {
     const { code } = await request.json();
     
-    const discordUser = await handleDiscordOAuth(env, code);
-    if (!discordUser) {
-      return new Response(JSON.stringify({ error: 'Discord authentication failed' }), {
+    const result = await handleDiscordOAuth(env, code);
+    if (!result || result.error) {
+      return new Response(JSON.stringify({ 
+        error: result?.error || 'Discord authentication failed',
+        details: result?.details 
+      }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    
+    const discordUser = result;
 
     // Check if user exists
     const existingUserData = await env.USERS.get(`discord:${discordUser.id}`);
