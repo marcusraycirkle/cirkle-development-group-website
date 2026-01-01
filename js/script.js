@@ -259,19 +259,12 @@ function submitReply(commentId) {
     return;
   }
 
-  const result = blogManager.addReply(currentBlogId, commentId, replyText.value, auth.currentUser);
+  // TODO: Convert to API call
+  alert('Reply functionality coming soon with API integration!');
+}
 
-  if (result.success) {
-    messageDiv.textContent = 'Reply posted!';
-    messageDiv.className = 'success-message';
-    
-    setTimeout(() => {
-      loadBlogPost(currentBlogId);
-    }, 500);
-  } else {
-    messageDiv.textContent = result.message;
-    messageDiv.className = 'error-message';
-  if (auth.isLoggedIn()) {
+function openUserProfile(userId) {
+  if (api.isLoggedIn()) {
     window.location.href = `consumer/dashboard.html?viewProfile=${userId}`;
   } else {
     // Show login prompt
@@ -279,9 +272,6 @@ function submitReply(commentId) {
     window.location.href = 'consumer/login.html';
   }
 }
-
-function openUserProfile(userId) {
-  window.location.href = `consumer/dashboard.html?viewProfile=${userId}`;
 }
 
 function getTimeAgo(date) {
