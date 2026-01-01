@@ -186,6 +186,10 @@ async function loadBlogPost(blogId) {
       </div>
     </div>
   `;
+  } catch (error) {
+    console.error('Error loading blog post:', error);
+    showBlogNotFound();
+  }
 }
 
 function renderComments(comments) {

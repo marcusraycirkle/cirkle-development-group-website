@@ -534,54 +534,11 @@ class BlogManager {
 
     return userComments.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }
-
-  // Delete blog (admin nickname || user.username,
-      suggestedById: user.id,
-      suggestedAt: new Date().toISOString(),
-      status: 'pending'
-    };
-
-    suggestions.push(newSuggestion);
-    localStorage.setItem('blogSuggestions', JSON.stringify(suggestions));
-
-    // Increment user's suggestion count
-    if (auth) {
-      auth.incrementActivityStat(user.id, 'blogsSuggested');
-    }
-  }
-
-  // Get blog suggestions
-  getAllSuggestions() {
-    const suggestionsJson = localStorage.getItem('blogSuggestions');
-    return suggestionsJson ? JSON.parse(suggestionsJson) : [];
-  }
-
-  // Save blog suggestion
-  saveSuggestion(title, content, user) {
-    const suggestions = this.getAllSuggestions();
-    
-    const newSuggestion = {
-      id: Date.now(),
-      title: title,
-      content: content,
-      suggestedBy: user.username,
-      suggestedAt: new Date().toISOString(),
-      status: 'pending'
-    };
-
-    suggestions.push(newSuggestion);
-    localStorage.setItem('blogSuggestions', JSON.stringify(suggestions));
-
-    return { success: true, suggestion: newSuggestion };
-  }
 }
 
-// Initialize global instances
+// Create global instances
 const auth = new AuthManager();
 const blogManager = new BlogManager();
-
-// Initialize admin users on first load
-auth.initializeAdminUsers();
 
 // Update header based on login status
 async function updateHeader() {
