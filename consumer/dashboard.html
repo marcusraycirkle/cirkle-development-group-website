@@ -462,48 +462,6 @@
         messageDiv.style.display = 'block';
       }
     }
-      const pronouns = document.getElementById('settings-pronouns').value;
-      const bio = document.getElementById('settings-bio').value.trim();
-      const messageDiv = document.getElementById('settings-message');
-
-      // Validate bio
-      if (bio.length > 200) {
-        messageDiv.textContent = 'Bio must be 200 characters or less';
-        messageDiv.style.color = '#e53e3e';
-        messageDiv.style.display = 'block';
-        return;
-      }
-
-      const urlPattern = /(https?:\/\/|www\.)/i;
-      if (urlPattern.test(bio)) {
-        messageDiv.textContent = 'Links are not allowed in bio';
-        messageDiv.style.color = '#e53e3e';
-        messageDiv.style.display = 'block';
-        return;
-      }
-
-      const updates = {
-        profilePhoto: photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(auth.currentUser.username)}&background=6b46c1&color=fff&size=128`,
-        nickname: nickname || auth.currentUser.username,
-        pronouns: pronouns,
-        bio: bio
-      };
-
-      const result = auth.updateProfile(auth.currentUser.id, updates);
-
-      if (result.success) {
-        messageDiv.style.color = '#38a169';
-        messageDiv.textContent = 'Settings saved successfully!';
-        messageDiv.style.display = 'block';
-        setTimeout(() => {
-          location.reload();
-        }, 1500);
-      } else {
-        messageDiv.style.color = '#e53e3e';
-        messageDiv.textContent = 'Failed to save settings';
-        messageDiv.style.display = 'block';
-      }
-    }
 
     function closeSettingsModal() {
       document.getElementById('settings-modal').classList.remove('active');
@@ -537,6 +495,11 @@
     }
 
     function openUserProfile(userId) {
+      // TODO: Implement API endpoint for fetching other user profiles
+      console.log('Profile viewing feature coming soon!');
+      return;
+      
+      /* Disabled until API is ready
       const user = auth.getUserById(userId);
       if (!user) return;
 
@@ -623,6 +586,9 @@
     }
 
     function loadProfileComments(userId) {
+      // TODO: Implement API endpoints for user profiles and comments
+      return;
+      /* Disabled until API is ready
       const user = auth.getUserById(userId);
       if (!user || !currentUser) return;
 
@@ -684,6 +650,11 @@
     }
 
     function toggleFollow() {
+      // TODO: Implement follow/unfollow API endpoints
+      console.log('Follow feature coming soon!');
+      return;
+      
+      /* Disabled until API is ready
       if (!currentProfileUserId) return;
       
       const result = auth.followUser(currentProfileUserId);
@@ -697,6 +668,7 @@
           document.getElementById('profile-modal-followers').textContent = (user.followers || []).length;
         }
       }
+      */
     }
 
     // Delete Account Functions
