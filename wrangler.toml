@@ -4,10 +4,10 @@ compatibility_date = "2024-01-01"
 
 # KV Namespaces for data storage
 kv_namespaces = [
-  { binding = "USERS", id = "users_kv", preview_id = "users_kv_preview" },
-  { binding = "SESSIONS", id = "sessions_kv", preview_id = "sessions_kv_preview" },
-  { binding = "BLOGS", id = "blogs_kv", preview_id = "blogs_kv_preview" },
-  { binding = "BLOG_SUGGESTIONS", id = "suggestions_kv", preview_id = "suggestions_kv_preview" }
+  { binding = "USERS", id = "485a0ed1480d4f1b8c7d1766f95bc091" },
+  { binding = "SESSIONS", id = "c0668363dc224b2e9ad713c7ceefd8c5" },
+  { binding = "BLOGS", id = "b7c64054857c4bf9a7c5f02c3385ed9d" },
+  { binding = "BLOG_SUGGESTIONS", id = "99862631014d4ec6ae2ac1896f40b24c" }
 ]
 
 # Environment variables and secrets
@@ -25,7 +25,3 @@ FRONTEND_URL = "https://cirkledevelopment.co.uk"
 
 [build]
 command = "echo 'No build step required'"
-
-[[routes]]
-pattern = "cirkledevelopment.co.uk/api/*"
-zone_name = "cirkledevelopment.co.uk"

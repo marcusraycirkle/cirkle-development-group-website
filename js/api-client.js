@@ -5,7 +5,7 @@
 
 const API_BASE_URL = window.location.hostname === 'localhost' 
   ? 'http://localhost:8787/api'  // For local development
-  : 'https://cirkledevelopment.co.uk/api';  // Production
+  : 'https://cirkle-api.marcusray.workers.dev/api';  // Production
 
 class APIClient {
   constructor() {
