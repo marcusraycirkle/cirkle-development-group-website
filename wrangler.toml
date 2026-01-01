@@ -14,7 +14,7 @@ kv_namespaces = [
 [vars]
 ENVIRONMENT = "production"
 MYCIRKLE_API_URL = "https://mycirkle-auth.marcusray.workers.dev/api"
-FRONTEND_URL = "https://cirkledevelopment.co.uk"
+FRONTEND_URL = "https://group.cirkledevelopment.co.uk"
 
 # These should be set via: wrangler secret put <SECRET_NAME>
 # DISCORD_CLIENT_ID - Your Discord OAuth Client ID

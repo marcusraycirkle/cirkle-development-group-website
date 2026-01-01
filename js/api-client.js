@@ -7,6 +7,8 @@ const API_BASE_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:8787/api'  // For local development
   : 'https://cirkle-api.marcusray.workers.dev/api';  // Production
 
+// Note: Website deployed at https://group.cirkledevelopment.co.uk
+
 class APIClient {
   constructor() {
     this.sessionToken = localStorage.getItem('sessionToken');
