@@ -98,6 +98,37 @@
     </div>
   </div>
 
+  <!-- Bio Modal for new users -->
+  <div id="bio-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>Complete Your Profile</h2>
+      </div>
+      <div class="modal-body">
+        <div style="padding: 20px;">
+          <label for="bio-input" style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 10px;">
+            Tell us about yourself (Optional)
+          </label>
+          <textarea 
+            id="bio-input" 
+            maxlength="500" 
+            rows="5" 
+            style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit;"
+            placeholder="Write a short bio about yourself..."
+          ></textarea>
+          <div style="text-align: right; color: #718096; font-size: 12px; margin-top: 5px;">
+            <span id="bio-counter">0</span>/500 characters
+          </div>
+          <div id="bio-error" class="error-message"></div>
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="submitBio()" class="auth-btn" style="flex: 1;">Save & Continue</button>
+            <button onclick="skipBio()" class="auth-btn" style="flex: 1; background: #e2e8f0; color: #4a5568;">Skip</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Forgot Password Modal -->
   <div id="forgot-password-modal" class="modal">
     <div class="modal-content" style="max-width: 500px;">
@@ -206,14 +237,13 @@
           // Show MyCirkle verification for new users
           showMyCirkleModal();
         } else {
-        console.error('OAuth callback error:', error);
-        const errorDiv = document.getElementById('auth-error');
-        errorDiv.style.color = '#e53e3e';
-        errorDiv.textContent = error.message || 'Discord authentication failed. Please make sure the Discord redirect URI is set to: https://group.cirkledevelopment.co.uk/consumer/login.html
           redirectToDashboard(result.user);
         }
       } catch (error) {
-        document.getElementById('auth-error').textContent = error.message || 'Authentication failed';
+        console.error('OAuth callback error:', error);
+        const errorDiv = document.getElementById('auth-error');
+        errorDiv.style.color = '#e53e3e';
+        errorDiv.textContent = error.message || 'Discord authentication failed. Please make sure the Discord redirect URI is set to: https://group.cirkledevelopment.co.uk/consumer/login.html';
       }
     }
 
