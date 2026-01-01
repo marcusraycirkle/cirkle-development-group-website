@@ -209,8 +209,6 @@
     © Cirkle Development Group 2025 | <a href="mailto:info@cirkledevelopment.co.uk">info@cirkledevelopment.co.uk</a>
   </footer>
 
-  <script src="../js/api-client.js"></script>
-  <script src="../js/mycirkle-helpers.js"></script>
   <script src="../js/auth.js"></script>
   <script>
     // Check authentication
@@ -224,7 +222,10 @@
 
     // Display greeting
     const greetingText = document.getElementById('greeting-text');
-    greetingText.textContent = `${auth.getGreeting()}, ${auth.currentUser.username}!`;
+    const username = auth.currentUser.username;
+    const isAdmin = auth.currentUser.isAdmin;
+    const adminBadge = isAdmin ? ' <span style="display: inline-flex; align-items: center; background: #3b82f6; color: white; padding: 4px 10px; border-radius: 12px; font-size: 14px; font-weight: 600; margin-left: 8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" style="margin-right: 4px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Admin</span>' : '';
+    greetingText.innerHTML = `${auth.getGreeting()}, ${username}!${adminBadge}`;
 
     // Update header
     updateHeader();
@@ -305,7 +306,13 @@
     }
 
     function closeSuggestionModal() {
-      document.getElementById('suggestionickname').value = auth.currentUser.nickname || auth.currentUser.username;
+      document.getElementById('suggestion-modal').classList.remove('active');
+      document.getElementById('suggestion-form').reset();
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settings-modal').classList.add('active');
+      document.getElementById('settings-nickname').value = auth.currentUser.nickname || auth.currentUser.username;
       document.getElementById('settings-pronouns').value = auth.currentUser.pronouns || '';
       document.getElementById('settings-bio').value = auth.currentUser.bio || '';
       document.getElementById('settings-photo').value = auth.currentUser.profilePhoto;
@@ -320,7 +327,9 @@
     }
 
     // Update bio character counter
-    document.getElementById('settings-bio').addEventListener('input', updateBioCharCount);unction submitSuggestion(event) {
+    document.getElementById('settings-bio').addEventListener('input', updateBioCharCount);
+
+    function submitSuggestion(event) {
       event.preventDefault();
       
       const title = document.getElementById('suggestion-title').value;
@@ -333,7 +342,15 @@
         messageDiv.textContent = 'Thank you! Your suggestion has been submitted to our team.';
         setTimeout(() => {
           closeSuggestionModal();
-        }, 2nickname = document.getElementById('settings-nickname').value.trim();
+        }, 2000);
+      } else {
+        messageDiv.textContent = 'Failed to submit suggestion. Please try again.';
+      }
+    }
+
+    function saveSettings() {
+      const photoUrl = document.getElementById('settings-photo').value;
+      const nickname = document.getElementById('settings-nickname').value.trim();
       const pronouns = document.getElementById('settings-pronouns').value;
       const bio = document.getElementById('settings-bio').value.trim();
       const messageDiv = document.getElementById('settings-message');
@@ -366,7 +383,16 @@
       if (result.success) {
         messageDiv.style.color = '#38a169';
         messageDiv.textContent = 'Settings saved successfully!';
-        messageDiv.style.display = 'block
+        messageDiv.style.display = 'block';
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+      } else {
+        messageDiv.style.color = '#e53e3e';
+        messageDiv.textContent = 'Failed to save settings';
+        messageDiv.style.display = 'block';
+      }
+    }
 
     function closeSettingsModal() {
       document.getElementById('settings-modal').classList.remove('active');
@@ -387,29 +413,6 @@
     // Update preview when photo URL changes
     document.getElementById('settings-photo').addEventListener('input', updateProfilePreview);
 
-    function saveSettings() {
-      const photoUrl = document.getElementById('settings-photo').value;
-      const pronouns = document.getElementById('settings-pronouns').value;
-      const bio = document.getElementById('settings-bio').value;
-      const messageDiv = document.getElementById('settings-message');
-
-      const updates = {
-        profilePhoto: photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(auth.currentUser.username)}&background=6b46c1&color=fff&size=128`,
-        pronouns: pronouns,
-        bio: bio
-      };
-
-      const result = auth.updateProfile(auth.currentUser.id, updates);
-
-      if (result.success) {
-        messageDiv.textContent = 'Settings saved successfully!';
-        updateHeader();
-        setTimeout(() => {
-          closeSettingsModal();
-        }, 1500);
-      }
-    }
-
     // Network Modal Functions
     let currentProfileUserId = null;
 
@@ -418,9 +421,19 @@
       loadNetwork();
     }
 
+    function closeNetworkModal() {
+      document.getElementById('network-modal').classList.remove('active');
+    }
+
+    function openUserProfile(userId) {
+      const user = auth.getUserById(userId);
+      if (!user) return;
+
+      currentProfileUserId = userId;
       const userStats = user.activityStats || { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
 
-      document.getElementById('profile-modal-username').textContent = user.nickname || user.username;
+      const adminBadge = user.isAdmin ? ' <span style="display: inline-flex; align-items: center; background: #3b82f6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-left: 6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white" style="margin-right: 3px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Admin</span>' : '';
+      document.getElementById('profile-modal-username').innerHTML = (user.nickname || user.username) + adminBadge;
       document.getElementById('profile-modal-photo').src = user.profilePhoto;
       document.getElementById('profile-modal-name').textContent = `${user.nickname || user.username}`;
       document.getElementById('profile-modal-pronouns').textContent = user.pronouns || '';
@@ -493,21 +506,50 @@
     }
 
     // Profile Modal Functions
-    function openUserProfile(userId) {
+    function closeProfileModal() {
+      document.getElementById('profile-modal').classList.remove('active');
+      currentProfileUserId = null;
+    }
+
+    function loadProfileComments(userId) {
       const user = auth.getUserById(userId);
       if (!user) return;
 
-      currentProfileUserId = userId;
+      const userStats = user.activityStats || { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
       const isFollowing = (auth.currentUser.following || []).includes(userId);
 
-      document.getElementById('profile-modal-username').textContent = user.username;
+      const adminBadge = user.isAdmin ? ' <span style="display: inline-flex; align-items: center; background: #3b82f6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-left: 6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white" style="margin-right: 3px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Admin</span>' : '';
+      document.getElementById('profile-modal-username').innerHTML = (user.nickname || user.username) + adminBadge;
       document.getElementById('profile-modal-photo').src = user.profilePhoto;
-      document.getElementById('profile-modal-name').textContent = user.username;
+      document.getElementById('profile-modal-name').textContent = user.nickname || user.username;
       document.getElementById('profile-modal-pronouns').textContent = user.pronouns || '';
       document.getElementById('profile-modal-pronouns').style.display = user.pronouns ? 'block' : 'none';
       document.getElementById('profile-modal-followers').textContent = (user.followers || []).length;
       document.getElementById('profile-modal-following').textContent = (user.following || []).length;
-      document.getElementById('profile-modal-bio').innerHTML = user.bio ? `<p>${user.bio}</p>` : '<p style="color: #718096; font-style: italic;">No bio yet</p>';
+      
+      // Show activity stats
+      let bioContent = user.bio ? `<p>${user.bio}</p>` : '<p style="color: #718096; font-style: italic;">No bio yet</p>';
+      bioContent += `
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px;">
+          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsInteracted}</div>
+            <div style="font-size: 12px; color: #718096;">Blogs Interacted</div>
+          </div>
+          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsSuggested}</div>
+            <div style="font-size: 12px; color: #718096;">Blogs Suggested</div>
+          </div>
+          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.commentsPosted}</div>
+            <div style="font-size: 12px; color: #718096;">Comments Posted</div>
+          </div>
+          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsAuthored}</div>
+            <div style="font-size: 12px; color: #718096;">Blogs Authored</div>
+          </div>
+        </div>
+      `;
+      document.getElementById('profile-modal-bio').innerHTML = bioContent;
       document.getElementById('follow-btn').textContent = isFollowing ? 'Unfollow' : 'Follow';
       
       // Load user's comments
@@ -528,11 +570,6 @@
       }
 
       document.getElementById('profile-modal').classList.add('active');
-    }
-
-    function closeProfileModal() {
-      document.getElementById('profile-modal').classList.remove('active');
-      currentProfileUserId = null;
     }
 
     function toggleFollow() {
