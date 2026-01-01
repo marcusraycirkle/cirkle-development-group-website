@@ -209,42 +209,52 @@
     © Cirkle Development Group 2025 | <a href="mailto:info@cirkledevelopment.co.uk">info@cirkledevelopment.co.uk</a>
   </footer>
 
+  <script src="../js/api-client.js"></script>
   <script src="../js/auth.js"></script>
   <script>
     // Check authentication
-    if (!auth.isLoggedIn()) {
+    if (!api.isLoggedIn()) {
       window.location.href = '/consumer/login.html';
     }
 
-    if (auth.isAdmin()) {
-      window.location.href = '/admin/dashboard.html';
+    // Load current user from API
+    let currentUser = null;
+    let isAdmin = false;
+    
+    async function initDashboard() {
+      try {
+        currentUser = await api.getCurrentUser();
+        isAdmin = currentUser.isAdmin || false;
+        
+        // Display greeting
+        displayGreeting();
+        updateHeader();
+        loadNetworkStats();
+        loadRecentComments();
+        loadActivityStats();
+        
+        // Check if viewing another user's profile
+        const urlParams = new URLSearchParams(window.location.search);
+        const viewProfileId = urlParams.get('viewProfile');
+        if (viewProfileId) {
+          setTimeout(() => openUserProfile(parseInt(viewProfileId)), 100);
+        }
+      } catch (error) {
+        console.error('Failed to load user:', error);
+        api.clearSession();
+        window.location.href = '/consumer/login.html';
+      }
     }
 
-    // Display greeting
-    const greetingText = document.getElementById('greeting-text');
-    const username = auth.currentUser.username;
-    const isAdmin = auth.currentUser.isAdmin;
-    const adminBadge = isAdmin ? ' <span style="display: inline-flex; align-items: center; background: #3b82f6; color: white; padding: 4px 10px; border-radius: 12px; font-size: 14px; font-weight: 600; margin-left: 8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" style="margin-right: 4px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Admin</span>' : '';
-    greetingText.innerHTML = `${auth.getGreeting()}, ${username}!${adminBadge}`;
-
-    // Update header
-    updateHeader();
-
-    // Load network stats
-    loadNetworkStats();
-
-    // Load recent comments
-    loadRecentComments();
-
-    // Load activity stats
-    loadActivityStats();
-
-    // Check if viewing another user's profile
-    const urlParams = new URLSearchParams(window.location.search);
-    const viewProfileId = urlParams.get('viewProfile');
-    if (viewProfileId) {
-      setTimeout(() => openUserProfile(parseInt(viewProfileId)), 100);
+    function displayGreeting() {
+      const greetingText = document.getElementById('greeting-text');
+      const username = currentUser.username;
+      const adminBadge = isAdmin ? ' <span style="display: inline-flex; align-items: center; background: #3b82f6; color: white; padding: 4px 10px; border-radius: 12px; font-size: 14px; font-weight: 600; margin-left: 8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" style="margin-right: 4px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Admin</span>' : '';
+      greetingText.innerHTML = `Hello, ${username}!${adminBadge}`;
     }
+
+    // Initialize dashboard
+    initDashboard();
 
     // Load activity stats
     function loadActivityStats() {

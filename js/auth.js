@@ -584,65 +584,66 @@ const blogManager = new BlogManager();
 auth.initializeAdminUsers();
 
 // Update header based on login status
-function updateHeader() {
+async function updateHeader() {
   const staffLoginBtn = document.querySelector('.staff-login');
   let userProfileBtn = document.querySelector('.user-profile');
 
-  if (auth.isLoggedIn()) {
-    // User is logged in, show profile
-    if (staffLoginBtn) staffLoginBtn.style.display = 'none';
-    
-    // Remove existing profile button if any
-    if (userProfileBtn) userProfileBtn.remove();
-    
-    // Create new profile button
-    const profileHTML = `
-      <div class="user-profile">
-        <img src="${auth.currentUser.profilePhoto}" alt="${auth.currentUser.username}" class="profile-photo" id="profile-trigger">
-        <div class="profile-dropdown" id="profile-dropdown">
-          <div class="profile-dropdown-header">
-            <img src="${auth.currentUser.profilePhoto}" alt="${auth.currentUser.username}" class="profile-dropdown-avatar">
-            <div>
-              <div class="profile-dropdown-name">${auth.currentUser.nickname || auth.currentUser.username}</div>
-              <div class="profile-dropdown-username">@${auth.currentUser.username}</div>
-            </div>
-          </div>
-          <div class="profile-dropdown-divider"></div>
-          <a href="${auth.isAdmin() ? '/admin/dashboard.html' : '/consumer/dashboard.html'}" class="profile-dropdown-item">
-            <span class="profile-dropdown-icon">📊</span>
-            ${auth.isAdmin() ? 'Admin Dashboard' : 'Dashboard'}
-          </a>
-          <a href="#" onclick="auth.logout(); return false;" class="profile-dropdown-item">
-            <span class="profile-dropdown-icon">🚪</span>
-            Logout
-          </a>
-        </div>
-      </div>
-    `;
-    staffLoginBtn.insertAdjacentHTML('afterend', profileHTML);
-    
-    // Add click event to toggle dropdown
-    setTimeout(() => {
-      const profileTrigger = document.getElementById('profile-trigger');
-      const dropdown = document.getElementById('profile-dropdown');
+  if (!staffLoginBtn) return;
+
+  try {
+    if (api.isLoggedIn()) {
+      const user = await api.getCurrentUser();
       
-      if (profileTrigger && dropdown) {
-        profileTrigger.addEventListener('click', function(e) {
-          e.stopPropagation();
-          dropdown.classList.toggle('show');
-        });
+      if (staffLoginBtn) staffLoginBtn.style.display = 'none';
+      if (userProfileBtn) userProfileBtn.remove();
+      
+      const profileHTML = `
+        <div class="user-profile">
+          <img src="${user.profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=6b46c1&color=fff&size=128`}" alt="${user.username}" class="profile-photo" id="profile-trigger">
+          <div class="profile-dropdown" id="profile-dropdown">
+            <div class="profile-dropdown-header">
+              <img src="${user.profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=6b46c1&color=fff&size=128`}" alt="${user.username}" class="profile-dropdown-avatar">
+              <div>
+                <div class="profile-dropdown-name">${user.nickname || user.username}</div>
+                <div class="profile-dropdown-username">@${user.username}</div>
+              </div>
+            </div>
+            <div class="profile-dropdown-divider"></div>
+            <a href="/consumer/dashboard.html" class="profile-dropdown-item">
+              <span class="profile-dropdown-icon">📊</span>
+              Dashboard
+            </a>
+            <a href="#" onclick="api.clearSession(); window.location.reload(); return false;" class="profile-dropdown-item">
+              <span class="profile-dropdown-icon">🚪</span>
+              Logout
+            </a>
+          </div>
+        </div>
+      `;
+      staffLoginBtn.insertAdjacentHTML('afterend', profileHTML);
+      
+      setTimeout(() => {
+        const profileTrigger = document.getElementById('profile-trigger');
+        const dropdown = document.getElementById('profile-dropdown');
         
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-          if (!e.target.closest('.user-profile')) {
-            dropdown.classList.remove('show');
-          }
-        });
-      }
-    }, 100);
-  } else {
-    // User not logged in, show login button
-    if (userProfileBtn) userProfileBtn.remove();
+        if (profileTrigger && dropdown) {
+          profileTrigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+          });
+          
+          document.addEventListener('click', function(e) {
+            if (!e.target.closest('.user-profile')) {
+              dropdown.classList.remove('show');
+            }
+          });
+        }
+      }, 100);
+    } else {
+      if (userProfileBtn) userProfileBtn.remove();
+      if (staffLoginBtn) staffLoginBtn.style.display = 'block';
+    }
+  } catch (error) {
     if (staffLoginBtn) staffLoginBtn.style.display = 'block';
   }
 }

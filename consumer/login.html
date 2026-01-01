@@ -349,11 +349,9 @@
     }
 
     function redirectToDashboard(user) {
-      if (user && user.isAdmin) {
-        window.location.href = '/admin/dashboard.html';
-      } else {
-        window.location.href = '/consumer/dashboard.html';
-      }
+      // All users go to consumer dashboard
+      // Admins/blog authors get additional features there
+      window.location.href = '/consumer/dashboard.html';
     }
   </script>
 </body>
