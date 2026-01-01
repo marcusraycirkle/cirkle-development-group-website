@@ -404,13 +404,17 @@ class BlogManager {
   createBlog(blogData, author) {
     const blogs = this.getAllBlogs();
     
-    const newBlog = {nickname || author.username,
+    const newBlog = {
+      id: Date.now(),
+      title: blogData.title,
+      content: blogData.content,
+      authorNickname: author.nickname || author.username,
       authorId: author.id,
       authorUsername: author.username,
       authorEmail: author.email || 'info@cirkledevelopment.co.uk',
       publishDate: new Date().toISOString(),
       bannerImage: blogData.bannerImage || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&h=400&fit=crop',
-      thumbnailImage: blogData.thumbnailImage || blogData.bannerImage || 'https://images.unsplash.com/photo-557804506-669a67965ba0?w=600&h=400&fit=crop',
+      thumbnailImage: blogData.thumbnailImage || blogData.bannerImage || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=400&fit=crop',
       comments: []
     };
 
@@ -421,7 +425,9 @@ class BlogManager {
     if (auth && author.id) {
       auth.incrementActivityStat(author.id, 'blogsAuthored');
     }
-    };
+    
+    return newBlog;
+  }
 
     blogs.unshift(newBlog);
     this.saveBlogs(blogs);
