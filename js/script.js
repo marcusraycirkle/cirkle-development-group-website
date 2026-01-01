@@ -121,6 +121,10 @@ function loadBlogPost(blogId) {
   });
 
   const authorInitial = blog.author.charAt(0).toUpperCase();
+  
+  // Get author user for profile link
+  const authorUser = blog.authorId ? auth.getUserById(blog.authorId) : null;
+  const authorLink = authorUser ? `onclick="openUserProfile(${blog.authorId})" style="cursor: pointer;"` : '';
 
   const blogContent = document.getElementById('blog-content');
   blogContent.style.display = 'block';
@@ -132,7 +136,7 @@ function loadBlogPost(blogId) {
     <div class="blog-post-header">
       <h1 class="blog-post-title">${blog.title}</h1>
       <div class="blog-post-meta">
-        <div class="blog-post-author">
+        <div class="blog-post-author" ${authorLink}>
           <div class="author-avatar">${authorInitial}</div>
           <div class="author-info">
             <div class="author-name">${blog.author}</div>
@@ -253,6 +257,12 @@ function submitReply(commentId) {
   } else {
     messageDiv.textContent = result.message;
     messageDiv.className = 'error-message';
+  if (auth.isLoggedIn()) {
+    window.location.href = `consumer/dashboard.html?viewProfile=${userId}`;
+  } else {
+    // Show login prompt
+    alert('Please log in to view user profiles');
+    window.location.href = 'consumer/login.html';
   }
 }
 

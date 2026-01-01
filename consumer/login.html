@@ -22,73 +22,55 @@
     <div class="auth-box">
       <div class="auth-header">
         <h1>Consumer Portal</h1>
-        <p>Access your account</p>
-        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 13px; color: #856404;">
-          <strong>⚠️ Note:</strong> Accounts are stored locally on your device. To access your account on multiple devices, please use the same browser and enable sync, or sign in on each device separately.
+        <p>Connect with Discord</p>
+      </div>
+
+      <!-- Discord Login Button -->
+      <div style="padding: 30px;">
+        <h2 style="text-align: center; margin-bottom: 25px;">Sign in with Discord</h2>
+        <button onclick="handleDiscordLogin()" class="discord-auth-btn" type="button">
+          <svg width="20" height="20" viewBox="0 0 71 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.440769 45.4204 0.525289C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.525289C25.5141 0.443589 25.4218 0.40133 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6168 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978ZM23.7259 37.3253C20.2276 37.3253 17.3451 34.1136 17.3451 30.1693C17.3451 26.225 20.1717 23.0133 23.7259 23.0133C27.308 23.0133 30.1626 26.2532 30.1066 30.1693C30.1066 34.1136 27.28 37.3253 23.7259 37.3253ZM47.3178 37.3253C43.8196 37.3253 40.9371 34.1136 40.9371 30.1693C40.9371 26.225 43.7636 23.0133 47.3178 23.0133C50.9 23.0133 53.7545 26.2532 53.6986 30.1693C53.6986 34.1136 50.9 37.3253 47.3178 37.3253Z" fill="white"/>
+          </svg>
+          Continue with Discord
+        </button>
+        <div id="auth-error" class="error-message"></div>
+        <div style="text-align: center; margin-top: 20px; color: #718096; font-size: 14px;">
+          By continuing, you agree to our Terms of Service
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Tab Selector -->
-      <div class="auth-tabs">
-        <button class="tab-btn active" onclick="switchTab('login')">Login</button>
-        <button class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
+  <!-- MyCirkle Verification Modal -->
+  <div id="mycirkle-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>MyCirkle Membership</h2>
       </div>
+      <div class="modal-body">
+        <div style="text-align: center; padding: 20px;">
+          <img src="https://my.cirkledevelopment.co.uk/assets/logo.png" alt="MyCirkle" style="width: 100px; margin-bottom: 20px;" onerror="this.style.display='none'">
+          <p style="color: #4a5568; margin-bottom: 25px;">
+            Are you a MyCirkle member? Verify your membership to unlock exclusive benefits!
+          </p>
+          
+          <div id="verification-status">
+            <button onclick="verifyMyCirkle()" class="auth-btn">
+              <span id="verify-btn-text">Verify Membership</span>
+              <span id="verify-btn-loader" style="display: none;">
+                <div class="loader"></div>
+              </span>
+            </button>
+            <button onclick="skipMyCirkle()" class="auth-btn" style="background: #e2e8f0; color: #4a5568; margin-top: 10px;">
+              Skip for Now
+            </button>
+          </div>
 
-      <!-- Login Form -->
-      <div id="login-form" class="auth-form active">
-        <h2>Welcome Back</h2>
-        <form onsubmit="handleLogin(event)">
-          <div class="form-group">
-            <label for="login-username">Username</label>
-            <input type="text" id="login-username" required placeholder="Enter your username">
+          <div id="verification-result" style="display: none; margin-top: 20px;">
+            <!-- Result will be shown here -->
           </div>
-          <div class="form-group">
-            <label for="login-password">Password</label>
-            <input type="password" id="login-password" required placeholder="Enter your password">
-          </div>
-          <div style="text-align: right; margin-bottom: 10px;">
-            <a href="#" onclick="showForgotPassword(); return false;" style="color: #6b46c1; text-decoration: none; font-size: 14px;">Forgot Password?</a>
-          </div>
-          <div id="login-error" class="error-message"></div>
-          <button type="submit" class="auth-btn">
-            <span class="btn-text">Login</span>
-            <span class="btn-loader" style="display: none;">
-              <div class="loader"></div>
-            </span>
-          </button>
-        </form>
-      </div>
-
-      <!-- Signup Form -->
-      <div id="signup-form" class="auth-form">
-        <h2>Create Account</h2>
-        <form onsubmit="handleSignup(event)">
-          <div class="form-group">
-            <label for="signup-username">Username</label>
-            <input type="text" id="signup-username" required placeholder="Choose a username" minlength="3">
-          </div>
-          <div class="form-group">
-            <label for="signup-password">Password</label>
-            <input type="password" id="signup-password" required placeholder="Choose a password" minlength="6">
-          </div>
-          <div class="form-group">
-            <label for="signup-confirm-password">Confirm Password</label>
-            <input type="password" id="signup-confirm-password" required placeholder="Confirm your password">
-          </div>
-          <div class="form-group checkbox-group">
-            <label>
-              <input type="checkbox" id="age-confirm" required>
-              I confirm that I am 13 years or older
-            </label>
-          </div>
-          <div id="signup-error" class="error-message"></div>
-          <button type="submit" class="auth-btn">
-            <span class="btn-text">Create Account</span>
-            <span class="btn-loader" style="display: none;">
-              <div class="loader"></div>
-            </span>
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   </div>
@@ -118,137 +100,170 @@
     © Cirkle Development Group 2025 | <a href="mailto:info@cirkledevelopment.co.uk">info@cirkledevelopment.co.uk</a>
   </footer>
 
+  <script src="../js/api-client.js"></script>
   <script src="../js/auth.js"></script>
   <script>
+    let currentUserData = null;
+
     // Check if already logged in
-    if (auth.isLoggedIn()) {
-      if (auth.isAdmin()) {
-        window.location.href = '/admin/dashboard.html';
-      } else {
-        window.location.href = '/consumer/dashboard.html';
-      }
-    }
-
-    function switchTab(tab) {
-      const loginForm = document.getElementById('login-form');
-      const signupForm = document.getElementById('signup-form');
-      const tabs = document.querySelectorAll('.tab-btn');
-
-      if (tab === 'login') {
-        loginForm.classList.add('active');
-        signupForm.classList.remove('active');
-        tabs[0].classList.add('active');
-        tabs[1].classList.remove('active');
-      } else {
-        signupForm.classList.add('active');
-        loginForm.classList.remove('active');
-        tabs[1].classList.add('active');
-        tabs[0].classList.remove('active');
-      }
-
-      // Clear error messages
-      document.getElementById('login-error').textContent = '';
-      document.getElementById('signup-error').textContent = '';
-    }
-
-    function showLoader(button) {
-      const btnText = button.querySelector('.btn-text');
-      const btnLoader = button.querySelector('.btn-loader');
-      btnText.style.display = 'none';
-      btnLoader.style.display = 'inline-block';
-      button.disabled = true;
-    }
-
-    function hideLoader(button) {
-      const btnText = button.querySelector('.btn-text');
-      const btnLoader = button.querySelector('.btn-loader');
-      btnText.style.display = 'inline';
-      btnLoader.style.display = 'none';
-      button.disabled = false;
-    }
-
-    function handleLogin(event) {
-      event.preventDefault();
-      
-      const username = document.getElementById('login-username').value;
-      const password = document.getElementById('login-password').value;
-      const errorDiv = document.getElementById('login-error');
-      const button = event.target.querySelector('button');
-
-      errorDiv.textContent = '';
-      showLoader(button);
-
-      // Simulate loading delay
-      setTimeout(() => {
-        const result = auth.login(username, password);
-
-        if (result.success) {
-          // Redirect based on user type
-          if (result.user.isAdmin) {
+    if (api.isLoggedIn()) {
+      // Verify session is still valid
+      api.getCurrentUser()
+        .then(user => {
+          if (user.isAdmin) {
             window.location.href = '/admin/dashboard.html';
           } else {
             window.location.href = '/consumer/dashboard.html';
           }
-        } else {
-          errorDiv.textContent = result.message;
-          hideLoader(button);
-        }
-      }, 1000);
+        })
+        .catch(() => {
+          // Session invalid, clear it
+          api.clearSession();
+        });
     }
 
-    function handleSignup(event) {
-      event.preventDefault();
+    // Check for OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      handleOAuthCallback(code);
+    }
 
-      const username = document.getElementById('signup-username').value;
-      const password = document.getElementById('signup-password').value;
-      const confirmPassword = document.getElementById('signup-confirm-password').value;
-      const ageConfirm = document.getElementById('age-confirm').checked;
-      const errorDiv = document.getElementById('signup-error');
-      const button = event.target.querySelector('button');
-
-      errorDiv.textContent = '';
-
-      // Validation
-      if (password !== confirmPassword) {
-        errorDiv.textContent = 'Passwords do not match';
-        return;
+    async function handleDiscordLogin() {
+      try {
+        const authUrl = await api.getDiscordAuthUrl();
+        window.location.href = authUrl;
+      } catch (error) {
+        document.getElementById('auth-error').textContent = 'Failed to initiate Discord login';
       }
+    }
 
-      if (!ageConfirm) {
-        errorDiv.textContent = 'You must confirm you are 13 or older';
-        return;
-      }
+    async function handleOAuthCallback(code) {
+      try {
+        const result = await api.handleDiscordCallback(code);
+        currentUserData = result.user;
 
-      showLoader(button);
+        // Clear URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
 
-      // Simulate loading delay
-      setTimeout(() => {
-        const result = auth.register(username, password);
-
-        if (result.success) {
-          // Auto login after registration
-          auth.login(username, password);
-          window.location.href = '/consumer/dashboard.html';
+        if (result.isNewUser) {
+          // Show MyCirkle verification for new users
+          showMyCirkleModal();
         } else {
-          errorDiv.textContent = result.message;
-          hideLoader(button);
+          // Existing user - go to dashboard
+          redirectToDashboard(result.user);
         }
-      }, 1000);
+      } catch (error) {
+        document.getElementById('auth-error').textContent = error.message || 'Authentication failed';
+      }
     }
 
-    function showForgotPassword() {
-      document.getElementById('forgot-password-modal').classList.add('active');
+    function showMyCirkleModal() {
+      document.getElementById('mycirkle-modal').classList.add('active');
     }
 
-    function closeForgotPassword() {
-      document.getElementById('forgot-password-modal').classList.remove('active');
+    function hideMyCirkleModal() {
+      document.getElementById('mycirkle-modal').classList.remove('active');
     }
 
-    // Close modal when clicking outside
-    window.onclick = function(event) {
-      const modal = document.getElementById('forgot-password-modal');
-      if (event.target === modal) {
-        closeForgotPassword();
+    async function verifyMyCirkle() {
+      const btnText = document.getElementById('verify-btn-text');
+      const btnLoader = document.getElementById('verify-btn-loader');
+      const resultDiv = document.getElementById('verification-result');
+      const statusDiv = document.getElementById('verification-status');
+
+      btnText.style.display = 'none';
+      btnLoader.style.display = 'inline-block';
+
+      try {
+        const result = await api.verifyMyCirkle();
+        
+        statusDiv.style.display = 'none';
+        resultDiv.style.display = 'block';
+
+        if (result.verified) {
+          resultDiv.innerHTML = `
+            <div style="background: #f0fff4; border: 2px solid #38a169; border-radius: 8px; padding: 20px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 10px;">✓</div>
+              <h3 style="color: #38a169; margin: 0 0 10px 0;">Membership Verified!</h3>
+              <p style="color: #4a5568; margin: 0;">You have been verified as a MyCirkle ${result.membershipTier || 'member'}.</p>
+              <button onclick="proceedToBio()" class="auth-btn" style="margin-top: 20px;">Continue</button>
+            </div>
+          `;
+        } else {
+          resultDiv.innerHTML = `
+            <div style="background: #fff5f5; border: 2px solid #e53e3e; border-radius: 8px; padding: 20px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 10px;">✗</div>
+              <h3 style="color: #e53e3e; margin: 0 0 10px 0;">Membership Not Found</h3>
+              <p style="color: #4a5568; margin: 0 0 15px 0;">
+                I'm sorry. I could not find your MyCirkle account. Please check if you are on the right Discord account or sign up at 
+                <a href="https://my.cirkledevelopment.co.uk" target="_blank" style="color: #6b46c1;">my.cirkledevelopment.co.uk</a>
+              </p>
+              <button onclick="proceedToBio()" class="auth-btn" style="background: #e2e8f0; color: #4a5568;">Continue Anyway</button>
+            </div>
+          `;
+        }
+      } catch (error) {
+        statusDiv.style.display = 'none';
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+          <div style="background: #fff5f5; border: 2px solid #e53e3e; border-radius: 8px; padding: 20px; text-align: center;">
+            <p style="color: #e53e3e;">Verification service unavailable. Please try again later.</p>
+            <button onclick="proceedToBio()" class="auth-btn" style="margin-top: 15px;">Continue Anyway</button>
+          </div>
+        `;
+      } finally {
+        btnText.style.display = 'inline';
+        btnLoader.style.display = 'none';
+      }
+    }
+
+    function skipMyCirkle() {
+      proceedToBio();
+    }
+
+    function proceedToBio() {
+      hideMyCirkleModal();
+      showBioModal();
+    }
+
+    function showBioModal() {
+      document.getElementById('bio-modal').classList.add('active');
+      const bioInput = document.getElementById('bio-input');
+      const bioCounter = document.getElementById('bio-counter');
+      
+      bioInput.value = '';
+      bioCounter.textContent = '0';
+      
+      // Update character counter
+      bioInput.addEventListener('input', function() {
+        bioCounter.textContent = this.value.length;
+      });
+    }
+
+    async function submitBio() {
+      const bio = document.getElementById('bio-input').value.trim();
+      const bioError = document.getElementById('bio-error');
+      
+      bioError.textContent = '';
+
+      try {
+        await api.completeProfile(bio);
+        redirectToDashboard(currentUserData);
+      } catch (error) {
+        bioError.textContent = error.message || 'Failed to save profile';
+      }
+    }
+
+    function skipBio() {
+      submitBio(); // Submit with empty bio
+    }
+
+    function redirectToDashboard(user) {
+      if (user && user.isAdmin) {
+        window.location.href = '/admin/dashboard.html';
+      } else {
+        window.location.href = '/consumer/dashboard.html';
       }
     }
   </script>

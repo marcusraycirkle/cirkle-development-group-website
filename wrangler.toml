@@ -1,0 +1,31 @@
+name = "cirkle-api"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# KV Namespaces for data storage
+kv_namespaces = [
+  { binding = "USERS", id = "users_kv", preview_id = "users_kv_preview" },
+  { binding = "SESSIONS", id = "sessions_kv", preview_id = "sessions_kv_preview" },
+  { binding = "BLOGS", id = "blogs_kv", preview_id = "blogs_kv_preview" },
+  { binding = "BLOG_SUGGESTIONS", id = "suggestions_kv", preview_id = "suggestions_kv_preview" }
+]
+
+# Environment variables and secrets
+[vars]
+ENVIRONMENT = "production"
+MYCIRKLE_API_URL = "https://mycirkle-auth.marcusray.workers.dev/api"
+FRONTEND_URL = "https://cirkledevelopment.co.uk"
+
+# These should be set via: wrangler secret put <SECRET_NAME>
+# DISCORD_CLIENT_ID - Your Discord OAuth Client ID
+# DISCORD_CLIENT_SECRET - Your Discord OAuth Client Secret
+# DISCORD_REDIRECT_URI - Your Discord OAuth redirect URI
+# JWT_SECRET - Secret for signing session tokens
+# Note: MYCIRKLE_API_KEY not needed - the API is public
+
+[build]
+command = "echo 'No build step required'"
+
+[[routes]]
+pattern = "cirkledevelopment.co.uk/api/*"
+zone_name = "cirkledevelopment.co.uk"

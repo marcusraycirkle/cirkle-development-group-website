@@ -17,7 +17,7 @@
         <li><a href="../index.html#contact">Contact</a></li>
       </ul>
     </nav>
-    <a href="login.html" class="staff-login">Consumer Login</a>
+    <div class="staff-login" style="display: none;"></div>
   </header>
 
   <div class="dashboard-container">
@@ -49,6 +49,29 @@
         <h2>👥 Network</h2>
         <p id="network-stats">Loading...</p>
         <button onclick="openNetworkModal()" class="dashboard-btn">View</button>
+      </div>
+    </div>
+
+    <!-- Activity Stats Section -->
+    <div class="dashboard-card" style="margin-bottom: 20px;">
+      <h2>Your Activity</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white;">
+          <div style="font-size: 32px; font-weight: bold;" id="stat-blogs-interacted">0</div>
+          <div style="font-size: 14px; opacity: 0.9;">Interacted with blogs</div>
+        </div>
+        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 10px; color: white;">
+          <div style="font-size: 32px; font-weight: bold;" id="stat-blogs-suggested">0</div>
+          <div style="font-size: 14px; opacity: 0.9;">Suggested blogs</div>
+        </div>
+        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 10px; color: white;">
+          <div style="font-size: 32px; font-weight: bold;" id="stat-comments-posted">0</div>
+          <div style="font-size: 14px; opacity: 0.9;">Comments posted</div>
+        </div>
+        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); border-radius: 10px; color: white;">
+          <div style="font-size: 32px; font-weight: bold;" id="stat-blogs-authored">0</div>
+          <div style="font-size: 14px; opacity: 0.9;">Blogs authored</div>
+        </div>
       </div>
     </div>
 
@@ -95,12 +118,20 @@
           <input type="text" id="settings-username" readonly>
         </div>
         <div class="form-group">
+          <label>Nickname</label>
+          <input type="text" id="settings-nickname" placeholder="Your display name">
+        </div>
+        <div class="form-group">
           <label>Pronouns (optional)</label>
           <input type="text" id="settings-pronouns" placeholder="e.g., he/him, she/her, they/them">
         </div>
         <div class="form-group">
-          <label>Bio</label>
-          <textarea id="settings-bio" placeholder="Tell us about yourself..." rows="4"></textarea>
+          <label>Bio (max 200 characters)</label>
+          <textarea id="settings-bio" placeholder="Tell us about yourself..." rows="4" maxlength="200"></textarea>
+          <div style="text-align: right; font-size: 13px; color: #718096; margin-top: 5px;">
+            <span id="bio-char-count">0</span>/200
+          </div>
+          <small style="color: #f59e0b; font-size: 13px;">Note: Links are not allowed in bio</small>
         </div>
         <div class="form-group">
           <label>Profile Photo URL</label>
@@ -178,6 +209,8 @@
     © Cirkle Development Group 2025 | <a href="mailto:info@cirkledevelopment.co.uk">info@cirkledevelopment.co.uk</a>
   </footer>
 
+  <script src="../js/api-client.js"></script>
+  <script src="../js/mycirkle-helpers.js"></script>
   <script src="../js/auth.js"></script>
   <script>
     // Check authentication
@@ -202,11 +235,29 @@
     // Load recent comments
     loadRecentComments();
 
+    // Load activity stats
+    loadActivityStats();
+
     // Check if viewing another user's profile
     const urlParams = new URLSearchParams(window.location.search);
     const viewProfileId = urlParams.get('viewProfile');
     if (viewProfileId) {
       setTimeout(() => openUserProfile(parseInt(viewProfileId)), 100);
+    }
+
+    // Load activity stats
+    function loadActivityStats() {
+      const stats = auth.currentUser.activityStats || {
+        blogsInteracted: 0,
+        blogsSuggested: 0,
+        commentsPosted: 0,
+        blogsAuthored: 0
+      };
+      
+      document.getElementById('stat-blogs-interacted').textContent = stats.blogsInteracted || 0;
+      document.getElementById('stat-blogs-suggested').textContent = stats.blogsSuggested || 0;
+      document.getElementById('stat-comments-posted').textContent = stats.commentsPosted || 0;
+      document.getElementById('stat-blogs-authored').textContent = stats.blogsAuthored || 0;
     }
 
     // Load network stats
@@ -254,12 +305,22 @@
     }
 
     function closeSuggestionModal() {
-      document.getElementById('suggestion-modal').classList.remove('active');
-      document.getElementById('suggestion-title').value = '';
-      document.getElementById('suggestion-content').value = '';
+      document.getElementById('suggestionickname').value = auth.currentUser.nickname || auth.currentUser.username;
+      document.getElementById('settings-pronouns').value = auth.currentUser.pronouns || '';
+      document.getElementById('settings-bio').value = auth.currentUser.bio || '';
+      document.getElementById('settings-photo').value = auth.currentUser.profilePhoto;
+      document.getElementById('settings-message').textContent = '';
+      updateBioCharCount();
+      updateProfilePreview();
     }
 
-    function submitSuggestion(event) {
+    function updateBioCharCount() {
+      const bio = document.getElementById('settings-bio').value;
+      document.getElementById('bio-char-count').textContent = bio.length;
+    }
+
+    // Update bio character counter
+    document.getElementById('settings-bio').addEventListener('input', updateBioCharCount);unction submitSuggestion(event) {
       event.preventDefault();
       
       const title = document.getElementById('suggestion-title').value;
@@ -272,20 +333,40 @@
         messageDiv.textContent = 'Thank you! Your suggestion has been submitted to our team.';
         setTimeout(() => {
           closeSuggestionModal();
-        }, 2000);
-      }
-    }
+        }, 2nickname = document.getElementById('settings-nickname').value.trim();
+      const pronouns = document.getElementById('settings-pronouns').value;
+      const bio = document.getElementById('settings-bio').value.trim();
+      const messageDiv = document.getElementById('settings-message');
 
-    // Settings Modal Functions
-    function openSettingsModal() {
-      document.getElementById('settings-modal').classList.add('active');
-      document.getElementById('settings-username').value = auth.currentUser.username;
-      document.getElementById('settings-pronouns').value = auth.currentUser.pronouns || '';
-      document.getElementById('settings-bio').value = auth.currentUser.bio || '';
-      document.getElementById('settings-photo').value = auth.currentUser.profilePhoto;
-      document.getElementById('settings-message').textContent = '';
-      updateProfilePreview();
-    }
+      // Validate bio
+      if (bio.length > 200) {
+        messageDiv.textContent = 'Bio must be 200 characters or less';
+        messageDiv.style.color = '#e53e3e';
+        messageDiv.style.display = 'block';
+        return;
+      }
+
+      const urlPattern = /(https?:\/\/|www\.)/i;
+      if (urlPattern.test(bio)) {
+        messageDiv.textContent = 'Links are not allowed in bio';
+        messageDiv.style.color = '#e53e3e';
+        messageDiv.style.display = 'block';
+        return;
+      }
+
+      const updates = {
+        profilePhoto: photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(auth.currentUser.username)}&background=6b46c1&color=fff&size=128`,
+        nickname: nickname || auth.currentUser.username,
+        pronouns: pronouns,
+        bio: bio
+      };
+
+      const result = auth.updateProfile(auth.currentUser.id, updates);
+
+      if (result.success) {
+        messageDiv.style.color = '#38a169';
+        messageDiv.textContent = 'Settings saved successfully!';
+        messageDiv.style.display = 'block
 
     function closeSettingsModal() {
       document.getElementById('settings-modal').classList.remove('active');
@@ -337,15 +418,40 @@
       loadNetwork();
     }
 
-    function closeNetworkModal() {
-      document.getElementById('network-modal').classList.remove('active');
-    }
+      const userStats = user.activityStats || { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
 
-    function loadNetwork() {
-      const followers = (auth.currentUser.followers || []).map(id => auth.getUserById(id)).filter(u => u);
-      const following = (auth.currentUser.following || []).map(id => auth.getUserById(id)).filter(u => u);
+      document.getElementById('profile-modal-username').textContent = user.nickname || user.username;
+      document.getElementById('profile-modal-photo').src = user.profilePhoto;
+      document.getElementById('profile-modal-name').textContent = `${user.nickname || user.username}`;
+      document.getElementById('profile-modal-pronouns').textContent = user.pronouns || '';
+      document.getElementById('profile-modal-pronouns').style.display = user.pronouns ? 'block' : 'none';
+      document.getElementById('profile-modal-followers').textContent = (user.followers || []).length;
+      document.getElementById('profile-modal-following').textContent = (user.following || []).length;
       
-      document.getElementById('followers-count').textContent = followers.length;
+      // Show activity stats
+      let bioContent = user.bio ? `<p>${user.bio}</p>` : '<p style="color: #718096; font-style: italic;">No bio yet</p>';
+      bioContent += `
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px;">
+          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsInteracted}</div>
+            <div style="font-size: 12px; color: #718096;">Blogs Interacted</div>
+          </div>
+          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsSuggested}</div>
+            <div style="font-size: 12px; color: #718096;">Blogs Suggested</div>
+          </div>
+          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.commentsPosted}</div>
+            <div style="font-size: 12px; color: #718096;">Comments Posted</div>
+          </div>
+          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsAuthored}</div>
+            <div style="font-size: 12px; color: #718096;">Blogs Authored</div>
+          </div>
+        </div>
+      `;
+      document.getElementById('profile-modal-bio').innerHTML = bioContent;
+      
       document.getElementById('following-count').textContent = following.length;
 
       const networkList = document.getElementById('network-list');

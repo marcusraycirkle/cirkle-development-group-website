@@ -32,7 +32,7 @@ class AuthManager {
   }
 
   // Register new user
-  register(username, password, profilePhoto = null) {
+  register(username, password, profilePhoto = null, bio = '', pronouns = '', nickname = '', discordData = null) {
     const users = this.getAllUsers();
     
     // Check if username already exists
@@ -40,30 +40,163 @@ class AuthManager {
       return { success: false, message: 'An account is already associated with this username' };
     }
 
-    // Check if password already exists (duplicate account attempt)
-    if (users.find(u => u.password === password)) {
+    // Check if password already exists (duplicate account attempt) - only for regular registration
+    if (password && users.find(u => u.password === password)) {
       return { success: false, message: 'An account is already associated with these credentials' };
+    }
+
+    // Validate bio (max 200 chars, no links)
+    if (bio) {
+      if (bio.length > 200) {
+        return { success: false, message: 'Bio must be 200 characters or less' };
+      }
+      // Check for links in bio
+      const urlPattern = /(https?:\/\/|www\.)/i;
+      if (urlPattern.test(bio)) {
+        return { success: false, message: 'Links are not allowed in bio' };
+      }
     }
 
     // Create new user
     const newUser = {
       id: Date.now(),
       username: username,
-      password: password, // In production, this should be hashed
+      nickname: nickname || username,
+      password: password || null, // No password for Discord users
       profilePhoto: profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=6b46c1&color=fff&size=128`,
-      pronouns: '',
-      bio: '',
+      pronouns: pronouns || '',
+      bio: bio || '',
       followers: [],
       following: [],
       createdAt: new Date().toISOString(),
       isAdmin: false,
-      suspended: false
+      suspended: false,
+      discordId: discordData ? discordData.id : null,
+      discordConnected: !!discordData,
+      activityStats: {
+        blogsInteracted: 0,
+        blogsSuggested: 0,
+        commentsPosted: 0,
+        blogsAuthored: 0
+      }
     };
 
     users.push(newUser);
     this.saveUsers(users);
 
     return { success: true, user: newUser };
+  }
+
+  // Initialize admin users
+  initializeAdminUsers() {
+    const users = this.getAllUsers();
+    const adminProfiles = [
+      {
+        username: 'teejayeveril',
+        nickname: 'Teejay Everil',
+        password: 'admin2025',
+        profilePhoto: 'https://ui-avatars.com/api/?name=Teejay+Everil&background=6b46c1&color=fff&size=128',
+        pronouns: 'he/him',
+        bio: 'Administrator and content creator at Cirkle Development Group.',
+        isAdmin: true
+      },
+      {
+        username: 'sam',
+        nickname: 'Sam',
+        password: 'admin2025',
+        profilePhoto: 'https://ui-avatars.com/api/?name=Sam&background=553c9a&color=fff&size=128',
+        pronouns: 'he/him',
+        bio: 'Administrator and content creator at Cirkle Development Group.',
+        isAdmin: true
+      },
+      {
+        username: 'caster',
+        nickname: 'Caster',
+        password: 'admin2025',
+        profilePhoto: 'https://ui-avatars.com/api/?name=Caster&background=7c3aed&color=fff&size=128',
+        pronouns: 'he/him',
+        bio: 'Administrator and content creator at Cirkle Development Group.',
+        isAdmin: true
+      },
+      {
+        username: 'marcusray',
+        nickname: 'Marcus Ray',
+        password: 'admin2025',
+        profilePhoto: 'https://ui-avatars.com/api/?name=Marcus+Ray&background=6b46c1&color=fff&size=128',
+        pronouns: 'he/him',
+        bio: 'Board of Directors at Cirkle Development Group. Backend development specialist.',
+        isAdmin: true
+      },
+      {
+        username: 'applersmith',
+        nickname: 'Appler Smith',
+        password: 'admin2025',
+        profilePhoto: 'https://ui-avatars.com/api/?name=Appler+Smith&background=8b5cf6&color=fff&size=128',
+        pronouns: 'they/them',
+        bio: 'Administrator and content creator at Cirkle Development Group.',
+        isAdmin: true
+      }
+    ];
+
+    adminProfiles.forEach(adminData => {
+      // Check if admin already exists
+      const existingAdmin = users.find(u => u.username.toLowerCase() === adminData.username.toLowerCase());
+      if (!existingAdmin) {
+        const adminUser = {
+          id: Date.now() + Math.random(),
+          username: adminData.username,
+          nickname: adminData.nickname,
+          password: adminData.password,
+          profilePhoto: adminData.profilePhoto,
+          pronouns: adminData.pronouns,
+          bio: adminData.bio,
+          followers: [],
+          following: [],
+          createdAt: new Date().toISOString(),
+          isAdmin: adminData.isAdmin,
+          suspended: false,
+          discordId: null,
+          discordConnected: false,
+          activityStats: {
+            blogsInteracted: 0,
+            blogsSuggested: 0,
+            commentsPosted: 0,
+            blogsAuthored: 0
+          }
+        };
+        users.push(adminUser);
+      }
+    });
+
+    this.saveUsers(users);
+  }
+
+  // Increment activity stat
+  incrementActivityStat(userId, statName) {
+    const users = this.getAllUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
+    
+    if (userIndex === -1) return;
+
+    if (!users[userIndex].activityStats) {
+      users[userIndex].activityStats = {
+        blogsInteracted: 0,
+        blogsSuggested: 0,
+        commentsPosted: 0,
+        blogsAuthored: 0
+      };
+    }
+
+    if (users[userIndex].activityStats[statName] !== undefined) {
+      users[userIndex].activityStats[statName]++;
+      this.saveUsers(users);
+
+      // Update current user if it's the same
+      if (this.currentUser && this.currentUser.id === userId) {
+        this.currentUser = users[userIndex];
+        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+      }
+    }
   }
 
   // Login user
@@ -224,6 +357,8 @@ class BlogManager {
           title: 'Welcome to Cirkle Development Group',
           content: '<p>We are thrilled to announce the launch of our new blog! This platform will serve as a hub for updates, insights, and stories from the Cirkle Development Group and our subsidiaries.</p><p>Stay tuned for exciting content about our projects, company updates, and industry insights.</p>',
           author: 'Marcus Ray',
+          authorId: null,
+          authorUsername: 'marcusray',
           authorEmail: 'marcusray@cirkledevelopment.co.uk',
           publishDate: new Date().toISOString(),
           bannerImage: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&h=400&fit=crop',
@@ -235,6 +370,8 @@ class BlogManager {
           title: 'Introducing Our Subsidiaries',
           content: '<p>Cirkle Development Group is proud to be the parent organization of several innovative companies, including Cirkle Development, Aer Lingus PTFS, and DevDen.</p><p>Each subsidiary focuses on delivering excellence in their respective domains, and together we form a powerful network of expertise and innovation.</p>',
           author: 'Sam Caster',
+          authorId: null,
+          authorUsername: 'sam',
           authorEmail: 'samcaster@cirkledevelopment.co.uk',
           publishDate: new Date(Date.now() - 86400000).toISOString(),
           bannerImage: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=400&fit=crop',
@@ -267,11 +404,9 @@ class BlogManager {
   createBlog(blogData, author) {
     const blogs = this.getAllBlogs();
     
-    const newBlog = {
-      id: Date.now(),
-      title: blogData.title,
-      content: blogData.content,
-      author: author.username,
+    const newBlog = {nickname || author.username,
+      authorId: author.id,
+      authorUsername: author.username,
       authorEmail: author.email || 'info@cirkledevelopment.co.uk',
       publishDate: new Date().toISOString(),
       bannerImage: blogData.bannerImage || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&h=400&fit=crop',
@@ -282,19 +417,34 @@ class BlogManager {
     blogs.unshift(newBlog);
     this.saveBlogs(blogs);
 
+    // Increment author's blog count
+    if (auth && author.id) {
+      auth.incrementActivityStat(author.id, 'blogsAuthored');
+    }
+    };
+
+    blogs.unshift(newBlog);
+    this.saveBlogs(blogs);
+
     return { success: true, blog: newBlog };
   }
 
-  // Add comment to blog
-  addComment(blogId, comment, user) {
-    const blogs = this.getAllBlogs();
-    const blogIndex = blogs.findIndex(b => b.id === parseInt(blogId));
+  // Add comment tonickname || user.username,
+      authorId: user.id,
+      authorPhoto: user.profilePhoto,
+      content: comment,
+      timestamp: new Date().toISOString(),
+      replies: []
+    };
 
-    if (blogIndex === -1) {
-      return { success: false, message: 'Blog not found' };
+    blogs[blogIndex].comments.push(newComment);
+    this.saveBlogs(blogs);
+
+    // Increment user's comment count and interaction count
+    if (auth) {
+      auth.incrementActivityStat(user.id, 'commentsPosted');
+      auth.incrementActivityStat(user.id, 'blogsInteracted');
     }
-
-    const newComment = {
       id: Date.now(),
       author: user.username,
       authorId: user.id,
@@ -314,15 +464,21 @@ class BlogManager {
   addReply(blogId, commentId, replyText, user) {
     const blogs = this.getAllBlogs();
     const blogIndex = blogs.findIndex(b => b.id === parseInt(blogId));
+nickname || user.username,
+      authorId: user.id,
+      authorPhoto: user.profilePhoto,
+      content: replyText,
+      timestamp: new Date().toISOString()
+    };
 
-    if (blogIndex === -1) {
-      return { success: false, message: 'Blog not found' };
-    }
+    blogs[blogIndex].comments[commentIndex].replies.push(newReply);
+    this.saveBlogs(blogs);
 
-    const commentIndex = blogs[blogIndex].comments.findIndex(c => c.id === parseInt(commentId));
-    
-    if (commentIndex === -1) {
-      return { success: false, message: 'Comment not found' };
+    // Increment user's comment count and interaction count
+    if (auth) {
+      auth.incrementActivityStat(user.id, 'commentsPosted');
+      auth.incrementActivityStat(user.id, 'blogsInteracted');
+    }lse, message: 'Comment not found' };
     }
 
     if (!blogs[blogIndex].comments[commentIndex].replies) {
@@ -378,13 +534,19 @@ class BlogManager {
     return userComments.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }
 
-  // Delete blog (admin only)
-  deleteBlog(blogId) {
-    const blogs = this.getAllBlogs();
-    const filteredBlogs = blogs.filter(b => b.id !== parseInt(blogId));
-    this.saveBlogs(filteredBlogs);
+  // Delete blog (admin nickname || user.username,
+      suggestedById: user.id,
+      suggestedAt: new Date().toISOString(),
+      status: 'pending'
+    };
 
-    return { success: true };
+    suggestions.push(newSuggestion);
+    localStorage.setItem('blogSuggestions', JSON.stringify(suggestions));
+
+    // Increment user's suggestion count
+    if (auth) {
+      auth.incrementActivityStat(user.id, 'blogsSuggested');
+    }
   }
 
   // Get blog suggestions
@@ -417,30 +579,66 @@ class BlogManager {
 const auth = new AuthManager();
 const blogManager = new BlogManager();
 
+// Initialize admin users on first load
+auth.initializeAdminUsers();
+
 // Update header based on login status
 function updateHeader() {
   const staffLoginBtn = document.querySelector('.staff-login');
-  const userProfileBtn = document.querySelector('.user-profile');
+  let userProfileBtn = document.querySelector('.user-profile');
 
   if (auth.isLoggedIn()) {
     // User is logged in, show profile
     if (staffLoginBtn) staffLoginBtn.style.display = 'none';
     
-    if (!userProfileBtn) {
-      const profileHTML = `
-        <div class="user-profile">
-          <img src="${auth.currentUser.profilePhoto}" alt="${auth.currentUser.username}" class="profile-photo">
-          <span class="profile-name">${auth.currentUser.username}</span>
-          <div class="profile-dropdown">
-            <a href="${auth.isAdmin() ? '/admin/dashboard.html' : '/consumer/dashboard.html'}">
-              ${auth.isAdmin() ? 'Admin Dashboard' : 'Dashboard'}
-            </a>
-            <a href="#" onclick="auth.logout(); return false;">Logout</a>
+    // Remove existing profile button if any
+    if (userProfileBtn) userProfileBtn.remove();
+    
+    // Create new profile button
+    const profileHTML = `
+      <div class="user-profile">
+        <img src="${auth.currentUser.profilePhoto}" alt="${auth.currentUser.username}" class="profile-photo" id="profile-trigger">
+        <div class="profile-dropdown" id="profile-dropdown">
+          <div class="profile-dropdown-header">
+            <img src="${auth.currentUser.profilePhoto}" alt="${auth.currentUser.username}" class="profile-dropdown-avatar">
+            <div>
+              <div class="profile-dropdown-name">${auth.currentUser.nickname || auth.currentUser.username}</div>
+              <div class="profile-dropdown-username">@${auth.currentUser.username}</div>
+            </div>
           </div>
+          <div class="profile-dropdown-divider"></div>
+          <a href="${auth.isAdmin() ? '/admin/dashboard.html' : '/consumer/dashboard.html'}" class="profile-dropdown-item">
+            <span class="profile-dropdown-icon">📊</span>
+            ${auth.isAdmin() ? 'Admin Dashboard' : 'Dashboard'}
+          </a>
+          <a href="#" onclick="auth.logout(); return false;" class="profile-dropdown-item">
+            <span class="profile-dropdown-icon">🚪</span>
+            Logout
+          </a>
         </div>
-      `;
-      staffLoginBtn.insertAdjacentHTML('afterend', profileHTML);
-    }
+      </div>
+    `;
+    staffLoginBtn.insertAdjacentHTML('afterend', profileHTML);
+    
+    // Add click event to toggle dropdown
+    setTimeout(() => {
+      const profileTrigger = document.getElementById('profile-trigger');
+      const dropdown = document.getElementById('profile-dropdown');
+      
+      if (profileTrigger && dropdown) {
+        profileTrigger.addEventListener('click', function(e) {
+          e.stopPropagation();
+          dropdown.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+          if (!e.target.closest('.user-profile')) {
+            dropdown.classList.remove('show');
+          }
+        });
+      }
+    }, 100);
   } else {
     // User not logged in, show login button
     if (userProfileBtn) userProfileBtn.remove();
