@@ -203,13 +203,47 @@
             Our blog platform is committed to your privacy. Read about how we collect, use, and protect your data when you engage with our content.
           </p>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <div id="blog-actions" style="display: flex; gap: 10px; flex-wrap: wrap;">
           <a href="privacy-policy.html" class="dashboard-btn" style="text-decoration: none; font-size: 14px; padding: 10px 20px; white-space: nowrap;">
             View Privacy Policy
           </a>
-          <a href="consumer/login.html" class="dashboard-btn" style="text-decoration: none; font-size: 14px; padding: 10px 20px; white-space: nowrap; background: #38a169;">
+          <a href="consumer/login.html" class="dashboard-btn" id="blog-signup-btn" style="text-decoration: none; font-size: 14px; padding: 10px 20px; white-space: nowrap; background: #38a169;">
             Sign Up
           </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Blog Modal (Admin Only) -->
+    <div id="create-blog-modal" class="modal">
+      <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+          <h2>Create Blog Post</h2>
+          <button class="modal-close" onclick="closeCreateBlogModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form onsubmit="submitBlog(event)">
+            <div class="form-group">
+              <label for="blog-title">Headline *</label>
+              <input type="text" id="blog-title" required placeholder="Enter blog headline">
+            </div>
+            <div class="form-group">
+              <label for="blog-content">Body / Content *</label>
+              <textarea id="blog-content" required placeholder="Write your blog content here..." style="min-height: 200px;"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="blog-banner">Banner Image URL (Optional)</label>
+              <input type="url" id="blog-banner" placeholder="https://example.com/image.jpg">
+              <small style="color: #718096; font-size: 13px;">Leave empty for default gradient banner</small>
+            </div>
+            <div class="form-group">
+              <label for="blog-original-author">Original Author (Optional)</label>
+              <input type="text" id="blog-original-author" placeholder="If reposting content, credit the original author">
+              <small style="color: #718096; font-size: 13px;">Leave empty to use your name as author</small>
+            </div>
+            <div id="blog-message" class="success-message"></div>
+            <button type="submit" class="auth-btn">Publish Blog Post</button>
+          </form>
         </div>
       </div>
     </div>
@@ -259,5 +293,116 @@
   <script src="js/mycirkle-helpers.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/script.js"></script>
+  
+  <script>
+    // Update blog page UI based on login status
+    async function updateBlogPageUI() {
+      const blogActions = document.getElementById('blog-actions');
+      const signupBtn = document.getElementById('blog-signup-btn');
+      
+      if (!blogActions || !signupBtn) return;
+      
+      try {
+        if (api.isLoggedIn()) {
+          const user = await api.getCurrentUser();
+          
+          // Replace signup button with profile photo or create blog button
+          if (user.isAdmin) {
+            signupBtn.outerHTML = `
+              <button onclick="openCreateBlogModal()" class="dashboard-btn" style="background: #38a169; border: none; cursor: pointer; font-size: 14px; padding: 10px 20px; white-space: nowrap;">
+                ✍️ Create Post
+              </button>
+            `;
+          } else {
+            signupBtn.outerHTML = `
+              <a href="consumer/dashboard.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+                <img src="${user.profilePhoto}" alt="${user.username}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #667eea; object-fit: cover;">
+              </a>
+            `;
+          }
+        }
+      } catch (error) {
+        console.log('User not logged in or error fetching user');
+      }
+    }
+    
+    // Call when page loads and when navigating to blog page
+    document.addEventListener('DOMContentLoaded', updateBlogPageUI);
+    window.addEventListener('hashchange', () => {
+      if (window.location.hash.startsWith('#blog')) {
+        updateBlogPageUI();
+        
+        // Auto-open create modal if URL has create=true
+        if (window.location.hash.includes('create=true')) {
+          setTimeout(() => {
+            if (api.isLoggedIn()) {
+              api.getCurrentUser().then(user => {
+                if (user.isAdmin) {
+                  openCreateBlogModal();
+                }
+              }).catch(() => {});
+            }
+          }, 300);
+        }
+      }
+    });
+    
+    // Blog creation functions
+    function openCreateBlogModal() {
+      document.getElementById('create-blog-modal').style.display = 'flex';
+    }
+    
+    function closeCreateBlogModal() {
+      document.getElementById('create-blog-modal').style.display = 'none';
+      document.getElementById('blog-title').value = '';
+      document.getElementById('blog-content').value = '';
+      document.getElementById('blog-banner').value = '';
+      document.getElementById('blog-original-author').value = '';
+      document.getElementById('blog-message').textContent = '';
+    }
+    
+    async function submitBlog(event) {
+      event.preventDefault();
+      
+      const messageDiv = document.getElementById('blog-message');
+      const title = document.getElementById('blog-title').value.trim();
+      const content = document.getElementById('blog-content').value.trim();
+      const banner = document.getElementById('blog-banner').value.trim();
+      const originalAuthor = document.getElementById('blog-original-author').value.trim();
+      
+      try {
+        messageDiv.textContent = 'Publishing...';
+        messageDiv.style.color = '#4a5568';
+        
+        const blogData = {
+          title: title,
+          content: content,
+          thumbnailImage: banner || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
+          originalAuthor: originalAuthor || null
+        };
+        
+        const result = await api.createBlog(blogData);
+        
+        messageDiv.textContent = '✓ Blog post published successfully!';
+        messageDiv.style.color = '#38a169';
+        
+        setTimeout(() => {
+          closeCreateBlogModal();
+          loadBlogs(); // Reload the blog list
+        }, 1500);
+      } catch (error) {
+        messageDiv.textContent = error.message || 'Failed to publish blog post';
+        messageDiv.style.color = '#e53e3e';
+      }
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+      const modal = document.getElementById('create-blog-modal');
+      if (event.target === modal) {
+        closeCreateBlogModal();
+      }
+    });
+  </script>
 </body>
 </html>
