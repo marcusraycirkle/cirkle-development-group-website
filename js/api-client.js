@@ -108,6 +108,56 @@ class APIClient {
     return await this.request(`/users/${userId}`);
   }
 
+  // Blog methods
+  async getAllBlogs() {
+    const response = await this.request('/blogs');
+    return response.blogs || [];
+  }
+
+  async getBlogById(blogId) {
+    return await this.request(`/blogs/${blogId}`);
+  }
+
+  async createBlog(blogData) {
+    return await this.request('/blogs', {
+      method: 'POST',
+      body: JSON.stringify(blogData),
+    });
+  }
+
+  async deleteBlog(blogId) {
+    return await this.request(`/blogs/${blogId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async addComment(blogId, content) {
+    return await this.request(`/blogs/${blogId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async addReply(blogId, commentId, content) {
+    return await this.request(`/blogs/${blogId}/comments/${commentId}/replies`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  // Suggestion methods
+  async submitSuggestion(title, description) {
+    return await this.request('/suggestions', {
+      method: 'POST',
+      body: JSON.stringify({ title, description }),
+    });
+  }
+
+  async getAllSuggestions() {
+    const response = await this.request('/suggestions');
+    return response.suggestions || [];
+  }
+
   // Check if logged in
   isLoggedIn() {
     return !!this.sessionToken;

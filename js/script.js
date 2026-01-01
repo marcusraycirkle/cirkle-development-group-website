@@ -45,68 +45,78 @@ function showPage(pageId) {
 }
 
 // Load and display blogs
-function loadBlogs() {
-  const blogs = blogManager.getAllBlogs();
-  const blogGrid = document.getElementById('blog-grid');
-  const noBlogs = document.getElementById('no-blogs');
+async function loadBlogs() {
+  try {
+    const blogs = await api.getAllBlogs();
+    const blogGrid = document.getElementById('blog-grid');
+    const noBlogs = document.getElementById('no-blogs');
 
-  if (blogs.length === 0) {
+    if (blogs.length === 0) {
+      blogGrid.style.display = 'none';
+      noBlogs.style.display = 'block';
+      return;
+    }
+
+    blogGrid.style.display = 'flex';
+    noBlogs.style.display = 'none';
+    blogGrid.innerHTML = '';
+    
+    blogs.forEach(blog => {
+      const blogCard = document.createElement('div');
+      blogCard.className = 'blog-card';
+      blogCard.onclick = () => {
+        currentBlogId = blog.id;
+        window.location.hash = `blog-post?id=${blog.id}`;
+      };
+      
+      const date = new Date(blog.publishDate);
+      const formattedDate = date.toLocaleDateString('en-GB', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+
+      // Create excerpt (first 150 characters)
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = blog.content;
+      const excerpt = (tempDiv.textContent || tempDiv.innerText || '').substring(0, 150) + '...';
+
+      blogCard.innerHTML = `
+        <img class="blog-card-image" src="${blog.thumbnailImage}" alt="${blog.title}" onerror="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22220%22%3E%3Crect fill=%22%23667eea%22 width=%22400%22 height=%22220%22/%3E%3C/svg%3E'">
+        <div class="blog-card-content">
+          <h3 class="blog-card-title">${blog.title}</h3>
+          <p class="blog-card-excerpt">${excerpt}</p>
+          <div class="blog-card-meta">
+            <div>
+              <span class="blog-author" onclick="event.stopPropagation();">By ${blog.authorNickname || blog.authorUsername}</span>
+              <span class="blog-date"> • ${formattedDate}</span>
+            </div>
+            <span class="blog-comments">💬 ${blog.comments.length}</span>
+          </div>
+        </div>
+      `;
+
+      blogGrid.appendChild(blogCard);
+    });
+  } catch (error) {
+    console.error('Error loading blogs:', error);
+    const blogGrid = document.getElementById('blog-grid');
+    const noBlogs = document.getElementById('no-blogs');
     blogGrid.style.display = 'none';
     noBlogs.style.display = 'block';
-    return;
+    noBlogs.textContent = 'Failed to load blogs. Please try again later.';
   }
-
-  blogGrid.style.display = 'flex';
-  noBlogs.style.display = 'none';
-  blogGrid.innerHTML = '';
-  
-  blogs.forEach(blog => {
-    const blogCard = document.createElement('div');
-    blogCard.className = 'blog-card';
-    blogCard.onclick = () => {
-      currentBlogId = blog.id;
-      window.location.hash = `blog-post?id=${blog.id}`;
-    };
-    
-    const date = new Date(blog.publishDate);
-    const formattedDate = date.toLocaleDateString('en-GB', { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    });
-
-    // Create excerpt (first 150 characters)
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = blog.content;
-    const excerpt = (tempDiv.textContent || tempDiv.innerText || '').substring(0, 150) + '...';
-
-    blogCard.innerHTML = `
-      <img class="blog-card-image" src="${blog.thumbnailImage}" alt="${blog.title}" onerror="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22220%22%3E%3Crect fill=%22%23667eea%22 width=%22400%22 height=%22220%22/%3E%3C/svg%3E'">
-      <div class="blog-card-content">
-        <h3 class="blog-card-title">${blog.title}</h3>
-        <p class="blog-card-excerpt">${excerpt}</p>
-        <div class="blog-card-meta">
-          <div>
-            <span class="blog-author" onclick="event.stopPropagation(); alert('Author profiles coming soon!')">By ${blog.author}</span>
-            <span class="blog-date"> • ${formattedDate}</span>
-          </div>
-          <span class="blog-comments">💬 ${blog.comments.length}</span>
-        </div>
-      </div>
-    `;
-
-    blogGrid.appendChild(blogCard);
-  });
 }
 
 // Load blog post
-function loadBlogPost(blogId) {
+async function loadBlogPost(blogId) {
   if (!blogId) {
     showBlogNotFound();
     return;
   }
 
-  const blog = blogManager.getBlogById(blogId);
+  try {
+    const blog = await api.getBlogById(blogId);
   
   if (!blog) {
     showBlogNotFound();
@@ -123,12 +133,9 @@ function loadBlogPost(blogId) {
     year: 'numeric' 
   });
 
-  const authorInitial = blog.author.charAt(0).toUpperCase();
+  const authorName = blog.authorNickname || blog.authorUsername || blog.author || 'Anonymous';
+  const authorInitial = authorName.charAt(0).toUpperCase();
   
-  // Get author user for profile link
-  const authorUser = blog.authorId ? auth.getUserById(blog.authorId) : null;
-  const authorLink = authorUser ? `onclick="openUserProfile(${blog.authorId})" style="cursor: pointer;"` : '';
-
   const blogContent = document.getElementById('blog-content');
   blogContent.style.display = 'block';
   document.getElementById('blog-not-found').style.display = 'none';
@@ -139,11 +146,11 @@ function loadBlogPost(blogId) {
     <div class="blog-post-header">
       <h1 class="blog-post-title">${blog.title}</h1>
       <div class="blog-post-meta">
-        <div class="blog-post-author" ${authorLink}>
+        <div class="blog-post-author">
           <div class="author-avatar">${authorInitial}</div>
           <div class="author-info">
-            <div class="author-name">${blog.author}</div>
-            <div class="author-email">${blog.authorEmail}</div>
+            <div class="author-name">${authorName}</div>
+            <div class="author-email">${blog.authorEmail || 'info@cirkledevelopment.co.uk'}</div>
           </div>
         </div>
         <div class="blog-post-date">${formattedDate}</div>
@@ -160,7 +167,7 @@ function loadBlogPost(blogId) {
       </div>
 
       <div id="comment-form-container">
-        ${auth.isLoggedIn() ? `
+        ${api.isLoggedIn() ? `
           <div class="comment-form">
             <textarea id="comment-text" placeholder="Share your thoughts..."></textarea>
             <button class="comment-submit" onclick="submitComment()">Post Comment</button>
@@ -288,7 +295,7 @@ function getTimeAgo(date) {
   });
 }
 
-function submitComment() {
+async function submitComment() {
   const commentText = document.getElementById('comment-text');
   const messageDiv = document.getElementById('comment-message');
   
@@ -298,9 +305,9 @@ function submitComment() {
     return;
   }
 
-  const result = blogManager.addComment(currentBlogId, commentText.value, auth.currentUser);
+  try {
+    const result = await api.addComment(currentBlogId, commentText.value);
 
-  if (result.success) {
     messageDiv.textContent = 'Comment posted successfully!';
     messageDiv.className = 'success-message';
     commentText.value = '';
@@ -309,8 +316,8 @@ function submitComment() {
     setTimeout(() => {
       loadBlogPost(currentBlogId);
     }, 1000);
-  } else {
-    messageDiv.textContent = result.message;
+  } catch (error) {
+    messageDiv.textContent = error.message || 'Failed to post comment';
     messageDiv.className = 'error-message';
   }
 }

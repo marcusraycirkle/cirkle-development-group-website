@@ -444,6 +444,258 @@ const routes = {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   },
+
+  // Get all blogs
+  'GET /api/blogs': async (request, env) => {
+    try {
+      const blogsList = await env.BLOGS.list();
+      const blogs = [];
+      
+      for (const key of blogsList.keys) {
+        if (key.name.startsWith('blog:')) {
+          const blogData = await env.BLOGS.get(key.name);
+          if (blogData) {
+            blogs.push(JSON.parse(blogData));
+          }
+        }
+      }
+      
+      // Sort by publish date, newest first
+      blogs.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
+      
+      return new Response(JSON.stringify({ blogs }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+      return new Response(JSON.stringify({ error: 'Failed to fetch blogs' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  },
+
+  // Get single blog
+  'GET /api/blogs/:id': async (request, env, params) => {
+    const blog = await env.BLOGS.get(`blog:${params.id}`);
+    
+    if (!blog) {
+      return new Response(JSON.stringify({ error: 'Blog not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify(JSON.parse(blog)), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Create new blog (admin only)
+  'POST /api/blogs': async (request, env) => {
+    const user = await getUserFromRequest(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!user.isAdmin) {
+      return new Response(JSON.stringify({ error: 'Forbidden - Admin access required' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { title, content, bannerImage, thumbnailImage } = await request.json();
+    
+    const blogId = Date.now();
+    const newBlog = {
+      id: blogId,
+      title,
+      content,
+      authorNickname: user.nickname || user.username,
+      authorId: user.id,
+      authorUsername: user.username,
+      authorEmail: user.email || 'info@cirkledevelopment.co.uk',
+      publishDate: new Date().toISOString(),
+      bannerImage: bannerImage || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&h=400&fit=crop',
+      thumbnailImage: thumbnailImage || bannerImage || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=400&fit=crop',
+      comments: []
+    };
+
+    await env.BLOGS.put(`blog:${blogId}`, JSON.stringify(newBlog));
+
+    return new Response(JSON.stringify({ success: true, blog: newBlog }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Add comment to blog
+  'POST /api/blogs/:id/comments': async (request, env, params) => {
+    const user = await getUserFromRequest(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { content } = await request.json();
+    const blogData = await env.BLOGS.get(`blog:${params.id}`);
+    
+    if (!blogData) {
+      return new Response(JSON.stringify({ error: 'Blog not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const blog = JSON.parse(blogData);
+    const newComment = {
+      id: Date.now(),
+      author: user.username,
+      authorNickname: user.nickname || user.username,
+      authorId: user.id,
+      authorPhoto: user.profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=6b46c1&color=fff&size=128`,
+      content,
+      timestamp: new Date().toISOString(),
+      replies: []
+    };
+
+    blog.comments.push(newComment);
+    await env.BLOGS.put(`blog:${params.id}`, JSON.stringify(blog));
+
+    return new Response(JSON.stringify({ success: true, comment: newComment }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Add reply to comment
+  'POST /api/blogs/:id/comments/:commentId/replies': async (request, env, params) => {
+    const user = await getUserFromRequest(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { content } = await request.json();
+    const blogData = await env.BLOGS.get(`blog:${params.id}`);
+    
+    if (!blogData) {
+      return new Response(JSON.stringify({ error: 'Blog not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const blog = JSON.parse(blogData);
+    const comment = blog.comments.find(c => c.id === parseInt(params.commentId));
+    
+    if (!comment) {
+      return new Response(JSON.stringify({ error: 'Comment not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const newReply = {
+      id: Date.now(),
+      author: user.username,
+      authorNickname: user.nickname || user.username,
+      authorId: user.id,
+      authorPhoto: user.profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=6b46c1&color=fff&size=128`,
+      content,
+      timestamp: new Date().toISOString()
+    };
+
+    comment.replies.push(newReply);
+    await env.BLOGS.put(`blog:${params.id}`, JSON.stringify(blog));
+
+    return new Response(JSON.stringify({ success: true, reply: newReply }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Delete blog (admin only)
+  'DELETE /api/blogs/:id': async (request, env, params) => {
+    const user = await getUserFromRequest(request, env);
+    if (!user || !user.isAdmin) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    await env.BLOGS.delete(`blog:${params.id}`);
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Blog suggestions
+  'POST /api/suggestions': async (request, env) => {
+    const user = await getUserFromRequest(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { title, description } = await request.json();
+    
+    const suggestionId = Date.now();
+    const newSuggestion = {
+      id: suggestionId,
+      title,
+      description,
+      userId: user.id,
+      username: user.username,
+      userPhoto: user.profilePhoto,
+      timestamp: new Date().toISOString()
+    };
+
+    await env.BLOG_SUGGESTIONS.put(`suggestion:${suggestionId}`, JSON.stringify(newSuggestion));
+
+    return new Response(JSON.stringify({ success: true, suggestion: newSuggestion }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Get all suggestions (admin only)
+  'GET /api/suggestions': async (request, env) => {
+    const user = await getUserFromRequest(request, env);
+    if (!user || !user.isAdmin) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const suggestionsList = await env.BLOG_SUGGESTIONS.list();
+    const suggestions = [];
+    
+    for (const key of suggestionsList.keys) {
+      if (key.name.startsWith('suggestion:')) {
+        const suggestionData = await env.BLOG_SUGGESTIONS.get(key.name);
+        if (suggestionData) {
+          suggestions.push(JSON.parse(suggestionData));
+        }
+      }
+    }
+    
+    // Sort by timestamp, newest first
+    suggestions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    return new Response(JSON.stringify({ suggestions }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
 };
 
 // Main request handler
