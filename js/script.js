@@ -143,11 +143,22 @@ async function loadBlogPost(blogId) {
   blogContent.style.display = 'block';
   document.getElementById('blog-not-found').style.display = 'none';
   
+  // Check if current user is admin to show delete button
+  const isAdmin = currentUserInfo && currentUserInfo.isAdmin;
+  const deleteButton = isAdmin ? `
+    <button onclick="deleteBlogPost(${blog.id})" style="background: #e53e3e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+      🗑️ Delete Post
+    </button>
+  ` : '';
+
   blogContent.innerHTML = `
     <div class="blog-post-banner" style="background-image: url('${blog.bannerImage}');"></div>
     
     <div class="blog-post-header">
-      <h1 class="blog-post-title">${blog.title}</h1>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
+        <h1 class="blog-post-title" style="flex: 1;">${blog.title}</h1>
+        ${deleteButton}
+      </div>
       <div class="blog-post-meta">
         <div class="blog-post-author">
           <div class="author-avatar">${authorInitial}</div>
@@ -297,6 +308,19 @@ function handleCommentInput(event) {
     dropdown.style.width = '200px';
   } else {
     dropdown.style.display = 'none';
+  }
+}
+
+// Delete blog post (admin only)
+async function deleteBlogPost(blogId) {
+  if (!confirm('Are you sure you want to delete this blog post? This action cannot be undone.')) return;
+  
+  try {
+    await api.deleteBlog(blogId);
+    alert('Blog post deleted successfully!');
+    window.location.hash = 'blog';
+  } catch (error) {
+    alert('Failed to delete blog post: ' + (error.message || 'Unknown error'));
   }
 }
 

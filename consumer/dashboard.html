@@ -192,11 +192,12 @@
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>Username</label>
-          <input type="text" id="settings-username" readonly>
+          <label>Username (Discord)</label>
+          <input type="text" id="settings-username" readonly style="background: #f7fafc; color: #718096; cursor: not-allowed;">
+          <small style="color: #718096; font-size: 13px; margin-top: 5px; display: block;">⚠️ This is your Discord username and cannot be changed</small>
         </div>
         <div class="form-group">
-          <label>Nickname</label>
+          <label>Nickname (Display Name)</label>
           <input type="text" id="settings-nickname" placeholder="Your display name">
         </div>
         <div class="form-group">
@@ -459,6 +460,7 @@
       if (!currentUser) return;
       
       document.getElementById('settings-modal').classList.add('active');
+      document.getElementById('settings-username').value = currentUser.username;
       document.getElementById('settings-nickname').value = currentUser.nickname || currentUser.username;
       document.getElementById('settings-pronouns').value = currentUser.pronouns || '';
       document.getElementById('settings-bio').value = currentUser.bio || '';
