@@ -426,16 +426,22 @@ class BlogManager {
       auth.incrementActivityStat(author.id, 'blogsAuthored');
     }
     
-    return newBlog;
-  }
-
-    blogs.unshift(newBlog);
-    this.saveBlogs(blogs);
-
     return { success: true, blog: newBlog };
   }
 
-  // Add comment tonickname || user.username,
+  // Add comment to blog
+  addComment(blogId, comment, user) {
+    const blogs = this.getAllBlogs();
+    const blogIndex = blogs.findIndex(b => b.id === parseInt(blogId));
+    
+    if (blogIndex === -1) {
+      return { success: false, message: 'Blog not found' };
+    }
+
+    const newComment = {
+      id: Date.now(),
+      author: user.username,
+      authorNickname: user.nickname || user.username,
       authorId: user.id,
       authorPhoto: user.profilePhoto,
       content: comment,
@@ -451,17 +457,6 @@ class BlogManager {
       auth.incrementActivityStat(user.id, 'commentsPosted');
       auth.incrementActivityStat(user.id, 'blogsInteracted');
     }
-      id: Date.now(),
-      author: user.username,
-      authorId: user.id,
-      authorPhoto: user.profilePhoto,
-      content: comment,
-      timestamp: new Date().toISOString(),
-      replies: []
-    };
-
-    blogs[blogIndex].comments.push(newComment);
-    this.saveBlogs(blogs);
 
     return { success: true, comment: newComment };
   }
@@ -470,21 +465,14 @@ class BlogManager {
   addReply(blogId, commentId, replyText, user) {
     const blogs = this.getAllBlogs();
     const blogIndex = blogs.findIndex(b => b.id === parseInt(blogId));
-nickname || user.username,
-      authorId: user.id,
-      authorPhoto: user.profilePhoto,
-      content: replyText,
-      timestamp: new Date().toISOString()
-    };
+    
+    if (blogIndex === -1) {
+      return { success: false, message: 'Blog not found' };
+    }
 
-    blogs[blogIndex].comments[commentIndex].replies.push(newReply);
-    this.saveBlogs(blogs);
-
-    // Increment user's comment count and interaction count
-    if (auth) {
-      auth.incrementActivityStat(user.id, 'commentsPosted');
-      auth.incrementActivityStat(user.id, 'blogsInteracted');
-    }lse, message: 'Comment not found' };
+    const commentIndex = blogs[blogIndex].comments.findIndex(c => c.id === parseInt(commentId));
+    if (commentIndex === -1) {
+      return { success: false, message: 'Comment not found' };
     }
 
     if (!blogs[blogIndex].comments[commentIndex].replies) {
@@ -494,6 +482,7 @@ nickname || user.username,
     const newReply = {
       id: Date.now(),
       author: user.username,
+      authorNickname: user.nickname || user.username,
       authorId: user.id,
       authorPhoto: user.profilePhoto,
       content: replyText,
@@ -502,6 +491,12 @@ nickname || user.username,
 
     blogs[blogIndex].comments[commentIndex].replies.push(newReply);
     this.saveBlogs(blogs);
+
+    // Increment user's comment count and interaction count
+    if (auth) {
+      auth.incrementActivityStat(user.id, 'commentsPosted');
+      auth.incrementActivityStat(user.id, 'blogsInteracted');
+    }
 
     return { success: true, reply: newReply };
   }
