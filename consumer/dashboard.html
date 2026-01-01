@@ -270,6 +270,14 @@
     async function initDashboard() {
       try {
         currentUser = await api.getCurrentUser();
+        
+        if (!currentUser) {
+          console.error('No user data returned from API');
+          api.clearSession();
+          window.location.href = '/consumer/login.html';
+          return;
+        }
+        
         isAdmin = currentUser.isAdmin || false;
         
         // Display greeting
@@ -287,6 +295,7 @@
         }
       } catch (error) {
         console.error('Failed to load user:', error);
+        console.error('Session token:', api.sessionToken ? 'exists' : 'missing');
         api.clearSession();
         window.location.href = '/consumer/login.html';
       }
@@ -316,7 +325,9 @@
 
     // Load activity stats
     function loadActivityStats() {
-      const stats = auth.currentUser.activityStats || {
+      if (!currentUser) return;
+      
+      const stats = currentUser.activityStats || {
         blogsInteracted: 0,
         blogsSuggested: 0,
         commentsPosted: 0,
@@ -331,31 +342,20 @@
 
     // Load network stats
     function loadNetworkStats() {
-      const followers = auth.currentUser.followers || [];
-      const following = auth.currentUser.following || [];
+      if (!currentUser) return;
+      
+      const followers = currentUser.followers || [];
+      const following = currentUser.following || [];
       document.getElementById('network-stats').textContent = `${followers.length} Followers • ${following.length} Following`;
     }
 
     // Load recent comments
     function loadRecentComments() {
-      const comments = blogManager.getUserComments(auth.currentUser.id);
-      const commentsDiv = document.getElementById('recent-comments');
+      if (!currentUser) return;
       
-      if (comments.length === 0) {
-        commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No comments yet. Start engaging with our blog posts!</p>';
-        return;
-      }
-
-      commentsDiv.innerHTML = comments.slice(0, 5).map(comment => `
-        <div style="padding: 15px; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="window.location.href='../index.html#blog-post?id=${comment.blogId}'">
-          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-            <strong style="color: #6b46c1;">${comment.blogTitle}</strong>
-            <small style="color: #718096;">${getTimeAgo(new Date(comment.timestamp))}</small>
-          </div>
-          ${comment.isReply ? `<p style="font-size: 13px; color: #718096; margin: 5px 0;">Reply to ${comment.parentCommentAuthor}</p>` : ''}
-          <p style="color: #4a5568; margin: 0;">${comment.content}</p>
-        </div>
-      `).join('');
+      const commentsDiv = document.getElementById('recent-comments');
+      // TODO: Implement API endpoint to fetch user's recent comments
+      commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Recent comments will appear here once you start engaging with blog posts!</p>';
     }
 
     function getTimeAgo(date) {
@@ -379,11 +379,13 @@
     }
 
     function openSettingsModal() {
+      if (!currentUser) return;
+      
       document.getElementById('settings-modal').classList.add('active');
-      document.getElementById('settings-nickname').value = auth.currentUser.nickname || auth.currentUser.username;
-      document.getElementById('settings-pronouns').value = auth.currentUser.pronouns || '';
-      document.getElementById('settings-bio').value = auth.currentUser.bio || '';
-      document.getElementById('settings-photo').value = auth.currentUser.profilePhoto;
+      document.getElementById('settings-nickname').value = currentUser.nickname || currentUser.username;
+      document.getElementById('settings-pronouns').value = currentUser.pronouns || '';
+      document.getElementById('settings-bio').value = currentUser.bio || '';
+      document.getElementById('settings-photo').value = currentUser.profilePhoto;
       document.getElementById('settings-message').textContent = '';
       updateBioCharCount();
       updateProfilePreview();
@@ -397,28 +399,69 @@
     // Update bio character counter
     document.getElementById('settings-bio').addEventListener('input', updateBioCharCount);
 
-    function submitSuggestion(event) {
+    async function submitSuggestion(event) {
       event.preventDefault();
+      
+      if (!currentUser) return;
       
       const title = document.getElementById('suggestion-title').value;
       const content = document.getElementById('suggestion-content').value;
       const messageDiv = document.getElementById('suggestion-message');
 
-      const result = blogManager.saveSuggestion(title, content, auth.currentUser);
-
-      if (result.success) {
+      try {
+        await api.submitSuggestion(title, content);
         messageDiv.textContent = 'Thank you! Your suggestion has been submitted to our team.';
+        messageDiv.style.color = '#38a169';
         setTimeout(() => {
           closeSuggestionModal();
+          document.getElementById('suggestion-title').value = '';
+          document.getElementById('suggestion-content').value = '';
+          messageDiv.textContent = '';
         }, 2000);
-      } else {
+      } catch (error) {
         messageDiv.textContent = 'Failed to submit suggestion. Please try again.';
+        messageDiv.style.color = '#e53e3e';
       }
     }
 
-    function saveSettings() {
+    async function saveSettings() {
+      if (!currentUser) return;
+      
       const photoUrl = document.getElementById('settings-photo').value;
       const nickname = document.getElementById('settings-nickname').value.trim();
+      const pronouns = document.getElementById('settings-pronouns').value;
+      const bio = document.getElementById('settings-bio').value.trim();
+      const messageDiv = document.getElementById('settings-message');
+
+      // Validate bio
+      if (bio.length > 200) {
+        messageDiv.textContent = 'Bio must be 200 characters or less';
+        messageDiv.style.color = '#e53e3e';
+        messageDiv.style.display = 'block';
+        return;
+      }
+
+      const updates = {
+        profilePhoto: photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.username)}&background=6b46c1&color=fff&size=128`,
+        nickname: nickname || currentUser.username,
+        pronouns: pronouns,
+        bio: bio
+      };
+
+      try {
+        await api.updateProfile(updates);
+        messageDiv.style.color = '#38a169';
+        messageDiv.textContent = 'Settings saved successfully!';
+        messageDiv.style.display = 'block';
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+      } catch (error) {
+        messageDiv.style.color = '#e53e3e';
+        messageDiv.textContent = 'Failed to save settings';
+        messageDiv.style.display = 'block';
+      }
+    }
       const pronouns = document.getElementById('settings-pronouns').value;
       const bio = document.getElementById('settings-bio').value.trim();
       const messageDiv = document.getElementById('settings-message');
@@ -581,10 +624,10 @@
 
     function loadProfileComments(userId) {
       const user = auth.getUserById(userId);
-      if (!user) return;
+      if (!user || !currentUser) return;
 
       const userStats = user.activityStats || { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
-      const isFollowing = (auth.currentUser.following || []).includes(userId);
+      const isFollowing = (currentUser.following || []).includes(userId);
 
       const adminBadge = user.isAdmin ? ' <span style="display: inline-flex; align-items: center; background: #3b82f6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-left: 6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white" style="margin-right: 3px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Admin</span>' : '';
       document.getElementById('profile-modal-username').innerHTML = (user.nickname || user.username) + adminBadge;
