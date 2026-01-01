@@ -249,6 +249,7 @@ const routes = {
         followers: [],
         following: [],
         isAdmin: isAdmin,
+        profileComplete: false,
         suspended: false,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
@@ -278,8 +279,8 @@ const routes = {
     await env.USERS.put(`user:${user.id}`, JSON.stringify(user));
     await env.USERS.put(`discord:${discordUser.id}`, JSON.stringify(user));
 
-    // Check if user needs onboarding (no bio = new user or returning after deletion)
-    const needsOnboarding = !user.bio || user.bio === '';
+    // Check if user needs onboarding (profileComplete flag)
+    const needsOnboarding = !user.profileComplete;
 
     return new Response(JSON.stringify({
       sessionId: sessionId,

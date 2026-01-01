@@ -188,26 +188,25 @@
       if (privacyCheckbox) privacyCheckbox.addEventListener('change', updateLoginButton);
     });
 
-    // Check if already logged in
-    if (api.isLoggedIn()) {
+    // Check for OAuth callback FIRST
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    // Check if already logged in (but not if we're handling OAuth callback)
+    if (!code && api.isLoggedIn()) {
       // Verify session is still valid
       api.getCurrentUser()
         .then(user => {
-          if (user.isAdmin) {
-            window.location.href = '/admin/dashboard.html';
-          } else {
-            window.location.href = '/consumer/dashboard.html';
-          }
+          // All users go to consumer dashboard
+          window.location.href = '/consumer/dashboard.html';
         })
         .catch(() => {
           // Session invalid, clear it
           api.clearSession();
         });
     }
-
-    // Check for OAuth callback
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
+    
+    // Handle OAuth callback
     if (code) {
       handleOAuthCallback(code);
     }
