@@ -115,6 +115,9 @@ async function loadBlogPost(blogId) {
     return;
   }
 
+  // Check current user for admin features
+  await checkCurrentUser();
+
   try {
     const blog = await api.getBlogById(blogId);
   
@@ -166,23 +169,30 @@ async function loadBlogPost(blogId) {
         <h2>Comments (${blog.comments.length})</h2>
       </div>
 
-      <div id="comment-form-container">
-        ${api.isLoggedIn() ? `
-          <div class="comment-form">
-            <textarea id="comment-text" placeholder="Share your thoughts..."></textarea>
-            <button class="comment-submit" onclick="submitComment()">Post Comment</button>
-            <div id="comment-message" class="success-message" style="margin-top: 15px;"></div>
-          </div>
-        ` : `
-          <div class="login-prompt">
-            <p>Please log in to leave a comment</p>
-            <a href="consumer/login.html" class="login-link">Login / Sign Up</a>
-          </div>
-        `}
-      </div>
+      ${blog.commentsDisabled ? `
+        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; text-align: center; color: #856404;">
+          <strong>💬 Comments are disabled for this post</strong>
+        </div>
+      ` : `
+        <div id="comment-form-container">
+          ${api.isLoggedIn() ? `
+            <div class="comment-form">
+              <textarea id="comment-text" placeholder="Share your thoughts... Type @ to mention someone" oninput="handleCommentInput(event)"></textarea>
+              <div id="mention-dropdown" style="display: none; position: absolute; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 150px; overflow-y: auto; z-index: 100;"></div>
+              <button class="comment-submit" onclick="submitComment()">Post Comment</button>
+              <div id="comment-message" class="success-message" style="margin-top: 15px;"></div>
+            </div>
+          ` : `
+            <div class="login-prompt">
+              <p>Please log in to leave a comment</p>
+              <a href="consumer/login.html" class="login-link">Login / Sign Up</a>
+            </div>
+          `}
+        </div>
+      `}
 
       <div class="comments-list" id="comments-list">
-        ${blog.comments.length > 0 ? renderComments(blog.comments) : '<p style="text-align: center; color: #718096; padding: 20px;">No comments yet. Be the first to comment!</p>'}
+        ${blog.comments.length > 0 ? renderComments(blog.comments, blog.id) : '<p style="text-align: center; color: #718096; padding: 20px;">No comments yet. Be the first to comment!</p>'}
       </div>
     </div>
   `;
@@ -192,21 +202,38 @@ async function loadBlogPost(blogId) {
   }
 }
 
-function renderComments(comments) {
+// Store current user info for admin check
+let currentUserInfo = null;
+
+async function checkCurrentUser() {
+  try {
+    if (api.isLoggedIn()) {
+      currentUserInfo = await api.getCurrentUser();
+    }
+  } catch (e) {
+    currentUserInfo = null;
+  }
+}
+
+function renderComments(comments, blogId) {
   return comments.map(comment => {
     const commentDate = new Date(comment.timestamp);
     const timeAgo = getTimeAgo(commentDate);
     const replies = comment.replies || [];
+    const isAdmin = currentUserInfo && currentUserInfo.isAdmin;
 
     return `
-      <div class="comment">
+      <div class="comment" id="comment-${comment.id}">
         <div class="comment-header">
           <img src="${comment.authorPhoto}" alt="${comment.author}" class="comment-avatar" style="cursor: pointer;" onclick="openUserProfile(${comment.authorId})">
-          <span class="comment-author" style="cursor: pointer;" onclick="openUserProfile(${comment.authorId})">${comment.author}</span>
+          <span class="comment-author" style="cursor: pointer;" onclick="openUserProfile(${comment.authorId})">${comment.authorNickname || comment.author}</span>
           <span class="comment-time">${timeAgo}</span>
+          ${isAdmin ? `
+            <button onclick="deleteComment(${blogId}, ${comment.id})" style="margin-left: auto; background: #e53e3e; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🗑️ Delete</button>
+          ` : ''}
         </div>
-        <div class="comment-content">${comment.content}</div>
-        ${auth.isLoggedIn() ? `
+        <div class="comment-content">${formatMentions(comment.content)}</div>
+        ${api.isLoggedIn() ? `
           <button onclick="showReplyForm(${comment.id})" class="reply-btn" style="background: none; border: none; color: #6b46c1; cursor: pointer; font-size: 13px; margin-top: 8px;">Reply</button>
           <div id="reply-form-${comment.id}" style="display: none; margin-top: 10px;">
             <textarea id="reply-text-${comment.id}" placeholder="Write a reply..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; resize: vertical; min-height: 60px;"></textarea>
@@ -226,10 +253,10 @@ function renderComments(comments) {
                 <div class="comment" style="margin-bottom: 10px;">
                   <div class="comment-header">
                     <img src="${reply.authorPhoto}" alt="${reply.author}" class="comment-avatar" style="width: 30px; height: 30px; cursor: pointer;" onclick="openUserProfile(${reply.authorId})">
-                    <span class="comment-author" style="cursor: pointer;" onclick="openUserProfile(${reply.authorId})">${reply.author}</span>
+                    <span class="comment-author" style="cursor: pointer;" onclick="openUserProfile(${reply.authorId})">${reply.authorNickname || reply.author}</span>
                     <span class="comment-time">${replyTimeAgo}</span>
                   </div>
-                  <div class="comment-content">${reply.content}</div>
+                  <div class="comment-content">${formatMentions(reply.content)}</div>
                 </div>
               `;
             }).join('')}
@@ -238,6 +265,59 @@ function renderComments(comments) {
       </div>
     `;
   }).join('');
+}
+
+// Format @mentions in content
+function formatMentions(content) {
+  return content.replace(/@(\w+)/g, '<span style="color: #6b46c1; font-weight: 600;">@$1</span>');
+}
+
+// Handle @ mention input
+function handleCommentInput(event) {
+  const textarea = event.target;
+  const value = textarea.value;
+  const cursorPos = textarea.selectionStart;
+  
+  // Find if we're typing after an @
+  const textBeforeCursor = value.substring(0, cursorPos);
+  const atMatch = textBeforeCursor.match(/@(\w*)$/);
+  
+  const dropdown = document.getElementById('mention-dropdown');
+  
+  if (atMatch) {
+    // Show dropdown with user suggestions
+    // For now, we'll show a message that this feature is coming
+    dropdown.innerHTML = '<div style="padding: 10px; color: #718096; font-size: 13px;">@ mention feature - DM notifications coming soon!</div>';
+    dropdown.style.display = 'block';
+    
+    // Position dropdown near textarea
+    const rect = textarea.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + 5) + 'px';
+    dropdown.style.left = rect.left + 'px';
+    dropdown.style.width = '200px';
+  } else {
+    dropdown.style.display = 'none';
+  }
+}
+
+// Delete comment (admin only)
+async function deleteComment(blogId, commentId) {
+  if (!confirm('Are you sure you want to delete this comment?')) return;
+  
+  try {
+    await api.deleteComment(blogId, commentId);
+    
+    // Remove comment from DOM
+    const commentElement = document.getElementById(`comment-${commentId}`);
+    if (commentElement) {
+      commentElement.remove();
+    }
+    
+    // Update comment count
+    loadBlogPost(blogId);
+  } catch (error) {
+    alert('Failed to delete comment: ' + (error.message || 'Unknown error'));
+  }
 }
 
 function showReplyForm(commentId) {

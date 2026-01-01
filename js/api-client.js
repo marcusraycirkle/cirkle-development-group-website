@@ -114,6 +114,42 @@ class APIClient {
     return await this.request(`/users/${userId}`);
   }
 
+  // User search/list methods
+  async getAllUsers() {
+    const response = await this.request('/users');
+    return response.users || [];
+  }
+
+  async searchUsers(query) {
+    const response = await this.request(`/users?search=${encodeURIComponent(query)}`);
+    return response.users || [];
+  }
+
+  // Follow methods
+  async followUser(userId) {
+    return await this.request(`/users/${userId}/follow`, {
+      method: 'POST',
+    });
+  }
+
+  async unfollowUser(userId) {
+    return await this.request(`/users/${userId}/follow`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Notification methods
+  async getNotifications() {
+    const response = await this.request('/notifications');
+    return response.notifications || [];
+  }
+
+  async markNotificationsRead() {
+    return await this.request('/notifications/read', {
+      method: 'PUT',
+    });
+  }
+
   // Blog methods
   async getAllBlogs() {
     const response = await this.request('/blogs');
@@ -137,10 +173,16 @@ class APIClient {
     });
   }
 
-  async addComment(blogId, content) {
+  async addComment(blogId, content, mentions = []) {
     return await this.request(`/blogs/${blogId}/comments`, {
       method: 'POST',
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, mentions }),
+    });
+  }
+
+  async deleteComment(blogId, commentId) {
+    return await this.request(`/blogs/${blogId}/comments/${commentId}`, {
+      method: 'DELETE',
     });
   }
 

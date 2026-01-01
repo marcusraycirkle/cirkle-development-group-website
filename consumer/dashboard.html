@@ -43,6 +43,17 @@
       <p>Manage your account and interact with our content</p>
     </div>
 
+    <!-- Notifications Banner -->
+    <div id="notifications-banner" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; color: white;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">🔔</span>
+          <span id="notifications-text">You have new notifications!</span>
+        </div>
+        <button onclick="openNotificationsModal()" style="background: white; color: #667eea; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">View</button>
+      </div>
+    </div>
+
     <!-- Main Dashboard Grid (3x3 layout) -->
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px;">
       <div class="dashboard-card">
@@ -69,6 +80,18 @@
         <button onclick="openNetworkModal()" class="dashboard-btn">View</button>
       </div>
 
+      <div class="dashboard-card">
+        <h2>🔍 Find Users</h2>
+        <p>Search and connect with others.</p>
+        <button onclick="openSearchModal()" class="dashboard-btn">Search</button>
+      </div>
+
+      <div class="dashboard-card">
+        <h2>❤️ Following</h2>
+        <p id="following-count-text">Loading...</p>
+        <button onclick="openFollowingModal()" class="dashboard-btn">View</button>
+      </div>
+
       <div class="dashboard-card" style="text-align: center; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
         <div style="font-size: 42px; font-weight: bold; margin-bottom: 10px;" id="stat-blogs-interacted">0</div>
         <div style="font-size: 16px; opacity: 0.95;">Blogs Interacted</div>
@@ -84,14 +107,54 @@
         <div style="font-size: 16px; opacity: 0.95;">Comments Posted</div>
       </div>
 
-      <div class="dashboard-card" style="text-align: center; padding: 25px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
-        <div style="font-size: 42px; font-weight: bold; margin-bottom: 10px;" id="stat-blogs-authored">0</div>
-        <div style="font-size: 16px; opacity: 0.95;">Blogs Authored</div>
-      </div>
-
       <div class="dashboard-card" style="grid-column: span 3;">
         <h2>Your Recent Comments</h2>
         <div id="recent-comments"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Users Modal -->
+  <div id="search-modal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2>Find Users</h2>
+        <button class="modal-close" onclick="closeSearchModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 20px;">
+          <input type="text" id="user-search-input" placeholder="Search by username..." style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px;" oninput="searchUsers()">
+        </div>
+        <div style="margin-bottom: 15px;">
+          <button onclick="showAllUsers()" class="dashboard-btn" style="width: 100%;">👥 See All Users</button>
+        </div>
+        <div id="search-results" style="max-height: 400px; overflow-y: auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Following Modal -->
+  <div id="following-modal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2>People You Follow</h2>
+        <button class="modal-close" onclick="closeFollowingModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="following-list" style="max-height: 500px; overflow-y: auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Modal -->
+  <div id="notifications-modal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2>🔔 Notifications</h2>
+        <button class="modal-close" onclick="closeNotificationsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="notifications-list" style="max-height: 500px; overflow-y: auto;"></div>
       </div>
     </div>
   </div>
@@ -741,13 +804,296 @@
       const networkModal = document.getElementById('network-modal');
       const profileModal = document.getElementById('profile-modal');
       const deleteModal = document.getElementById('delete-account-modal');
+      const searchModal = document.getElementById('search-modal');
+      const followingModal = document.getElementById('following-modal');
+      const notificationsModal = document.getElementById('notifications-modal');
       
       if (event.target === suggestionModal) closeSuggestionModal();
       if (event.target === settingsModal) closeSettingsModal();
       if (event.target === networkModal) closeNetworkModal();
       if (event.target === profileModal) closeProfileModal();
       if (event.target === deleteModal) closeDeleteAccountModal();
+      if (event.target === searchModal) closeSearchModal();
+      if (event.target === followingModal) closeFollowingModal();
+      if (event.target === notificationsModal) closeNotificationsModal();
     }
+
+    // Search Modal Functions
+    function openSearchModal() {
+      document.getElementById('search-modal').style.display = 'flex';
+      document.getElementById('user-search-input').value = '';
+      document.getElementById('search-results').innerHTML = '<p style="color: #718096; text-align: center;">Start typing to search for users...</p>';
+    }
+
+    function closeSearchModal() {
+      document.getElementById('search-modal').style.display = 'none';
+    }
+
+    let searchTimeout;
+    async function searchUsers() {
+      clearTimeout(searchTimeout);
+      const query = document.getElementById('user-search-input').value.trim();
+      const resultsDiv = document.getElementById('search-results');
+      
+      if (!query) {
+        resultsDiv.innerHTML = '<p style="color: #718096; text-align: center;">Start typing to search for users...</p>';
+        return;
+      }
+      
+      searchTimeout = setTimeout(async () => {
+        resultsDiv.innerHTML = '<p style="color: #718096; text-align: center;">Searching...</p>';
+        
+        try {
+          const users = await api.searchUsers(query);
+          displayUserList(users, resultsDiv, 'search');
+        } catch (error) {
+          resultsDiv.innerHTML = '<p style="color: #e53e3e; text-align: center;">Failed to search users</p>';
+        }
+      }, 300);
+    }
+
+    async function showAllUsers() {
+      const resultsDiv = document.getElementById('search-results');
+      resultsDiv.innerHTML = '<p style="color: #718096; text-align: center;">Loading all users...</p>';
+      
+      try {
+        const users = await api.getAllUsers();
+        displayUserList(users, resultsDiv, 'all');
+      } catch (error) {
+        resultsDiv.innerHTML = '<p style="color: #e53e3e; text-align: center;">Failed to load users</p>';
+      }
+    }
+
+    function displayUserList(users, container, type) {
+      if (users.length === 0) {
+        container.innerHTML = '<p style="color: #718096; text-align: center;">No users found</p>';
+        return;
+      }
+      
+      // Filter out current user
+      const filteredUsers = users.filter(u => u.id !== currentUser.id);
+      
+      if (filteredUsers.length === 0) {
+        container.innerHTML = '<p style="color: #718096; text-align: center;">No other users found</p>';
+        return;
+      }
+      
+      container.innerHTML = filteredUsers.map(user => {
+        const isFollowing = (currentUser.following || []).includes(user.id);
+        const adminBadge = user.isAdmin ? '<span style="background: #3b82f6; color: white; padding: 2px 6px; border-radius: 8px; font-size: 10px; margin-left: 5px;">Admin</span>' : '';
+        
+        return `
+          <div style="display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #e2e8f0; gap: 15px;">
+            <img src="${user.profilePhoto}" alt="${user.username}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; cursor: pointer;" onclick="viewUserProfile('${user.id}')">
+            <div style="flex: 1; cursor: pointer;" onclick="viewUserProfile('${user.id}')">
+              <div style="font-weight: 600; color: #2d3748;">${user.nickname || user.username}${adminBadge}</div>
+              <div style="color: #718096; font-size: 14px;">@${user.username}</div>
+            </div>
+            <button onclick="toggleFollowUser('${user.id}', this)" class="dashboard-btn" style="padding: 8px 16px; font-size: 14px; ${isFollowing ? 'background: #e2e8f0; color: #4a5568;' : ''}">
+              ${isFollowing ? 'Unfollow' : 'Follow'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function toggleFollowUser(userId, button) {
+      const isFollowing = (currentUser.following || []).includes(userId);
+      
+      try {
+        if (isFollowing) {
+          await api.unfollowUser(userId);
+          currentUser.following = currentUser.following.filter(id => id !== userId);
+          button.textContent = 'Follow';
+          button.style.background = '';
+          button.style.color = '';
+        } else {
+          await api.followUser(userId);
+          if (!currentUser.following) currentUser.following = [];
+          currentUser.following.push(userId);
+          button.textContent = 'Unfollow';
+          button.style.background = '#e2e8f0';
+          button.style.color = '#4a5568';
+        }
+        loadNetworkStats();
+        updateFollowingCount();
+      } catch (error) {
+        console.error('Error toggling follow:', error);
+        alert(error.message || 'Failed to update follow status');
+      }
+    }
+
+    function updateFollowingCount() {
+      const count = (currentUser.following || []).length;
+      document.getElementById('following-count-text').textContent = `Following ${count} user${count !== 1 ? 's' : ''}`;
+    }
+
+    // Following Modal Functions
+    function openFollowingModal() {
+      document.getElementById('following-modal').style.display = 'flex';
+      loadFollowingList();
+    }
+
+    function closeFollowingModal() {
+      document.getElementById('following-modal').style.display = 'none';
+    }
+
+    async function loadFollowingList() {
+      const listDiv = document.getElementById('following-list');
+      const following = currentUser.following || [];
+      
+      if (following.length === 0) {
+        listDiv.innerHTML = `
+          <div style="text-align: center; padding: 40px 20px;">
+            <div style="font-size: 48px; margin-bottom: 15px;">👥</div>
+            <h3 style="color: #4a5568; margin-bottom: 10px;">No followers to be found</h3>
+            <p style="color: #718096;">Connect with friends and find new ones!</p>
+            <button onclick="closeFollowingModal(); openSearchModal();" class="dashboard-btn" style="margin-top: 15px;">Find Users</button>
+          </div>
+        `;
+        return;
+      }
+      
+      listDiv.innerHTML = '<p style="color: #718096; text-align: center;">Loading...</p>';
+      
+      try {
+        const users = [];
+        for (const userId of following) {
+          try {
+            const user = await api.getUserById(userId);
+            users.push(user);
+          } catch (e) {
+            console.log('Could not load user:', userId);
+          }
+        }
+        displayUserList(users, listDiv, 'following');
+      } catch (error) {
+        listDiv.innerHTML = '<p style="color: #e53e3e; text-align: center;">Failed to load following list</p>';
+      }
+    }
+
+    // Notifications Modal Functions
+    function openNotificationsModal() {
+      document.getElementById('notifications-modal').style.display = 'flex';
+      loadNotifications();
+      api.markNotificationsRead().catch(() => {});
+      document.getElementById('notifications-banner').style.display = 'none';
+    }
+
+    function closeNotificationsModal() {
+      document.getElementById('notifications-modal').style.display = 'none';
+    }
+
+    async function loadNotifications() {
+      const listDiv = document.getElementById('notifications-list');
+      
+      try {
+        const notifications = await api.getNotifications();
+        
+        if (notifications.length === 0) {
+          listDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 40px;">No notifications yet</p>';
+          return;
+        }
+        
+        listDiv.innerHTML = notifications.map(notif => `
+          <div style="display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #e2e8f0; gap: 15px; ${notif.read ? '' : 'background: #f0f4ff;'}">
+            <img src="${notif.fromPhoto || 'https://ui-avatars.com/api/?name=User&background=6b46c1&color=fff'}" alt="" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+            <div style="flex: 1;">
+              <div style="color: #2d3748;">${notif.message}</div>
+              <div style="color: #718096; font-size: 13px;">${getTimeAgo(new Date(notif.timestamp))}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        listDiv.innerHTML = '<p style="color: #e53e3e; text-align: center;">Failed to load notifications</p>';
+      }
+    }
+
+    async function checkNotifications() {
+      try {
+        const notifications = await api.getNotifications();
+        const unread = notifications.filter(n => !n.read);
+        
+        if (unread.length > 0) {
+          document.getElementById('notifications-banner').style.display = 'block';
+          document.getElementById('notifications-text').textContent = 
+            `You have ${unread.length} new notification${unread.length > 1 ? 's' : ''}!`;
+        }
+      } catch (error) {
+        console.log('Could not check notifications');
+      }
+    }
+
+    // View User Profile Function (re-enabled)
+    async function viewUserProfile(userId) {
+      try {
+        const user = await api.getUserById(userId);
+        
+        currentProfileUserId = userId;
+        const isFollowing = (currentUser.following || []).includes(userId);
+        const adminBadge = user.isAdmin ? ' <span style="display: inline-flex; align-items: center; background: #3b82f6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-left: 6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white" style="margin-right: 3px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Admin</span>' : '';
+        
+        document.getElementById('profile-modal-username').innerHTML = (user.nickname || user.username) + adminBadge;
+        document.getElementById('profile-modal-photo').src = user.profilePhoto;
+        document.getElementById('profile-modal-name').textContent = user.nickname || user.username;
+        document.getElementById('profile-modal-pronouns').textContent = user.pronouns || '';
+        document.getElementById('profile-modal-pronouns').style.display = user.pronouns ? 'block' : 'none';
+        document.getElementById('profile-modal-followers').textContent = (user.followers || []).length;
+        document.getElementById('profile-modal-following').textContent = (user.following || []).length;
+        document.getElementById('profile-modal-bio').textContent = user.bio || 'No bio yet';
+        document.getElementById('follow-btn').textContent = isFollowing ? 'Unfollow' : 'Follow';
+        document.getElementById('follow-btn').style.background = isFollowing ? '#e2e8f0' : '';
+        document.getElementById('follow-btn').style.color = isFollowing ? '#4a5568' : '';
+        
+        // Close other modals and open profile
+        closeSearchModal();
+        closeFollowingModal();
+        document.getElementById('profile-modal').style.display = 'flex';
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        alert('Failed to load user profile');
+      }
+    }
+
+    // Update toggleFollow to use new API
+    async function toggleFollow() {
+      if (!currentProfileUserId || !currentUser) return;
+      
+      const btn = document.getElementById('follow-btn');
+      const isFollowing = (currentUser.following || []).includes(currentProfileUserId);
+      
+      try {
+        if (isFollowing) {
+          await api.unfollowUser(currentProfileUserId);
+          currentUser.following = currentUser.following.filter(id => id !== currentProfileUserId);
+          btn.textContent = 'Follow';
+          btn.style.background = '';
+          btn.style.color = '';
+        } else {
+          await api.followUser(currentProfileUserId);
+          if (!currentUser.following) currentUser.following = [];
+          currentUser.following.push(currentProfileUserId);
+          btn.textContent = 'Unfollow';
+          btn.style.background = '#e2e8f0';
+          btn.style.color = '#4a5568';
+        }
+        
+        // Refresh follower count
+        const user = await api.getUserById(currentProfileUserId);
+        document.getElementById('profile-modal-followers').textContent = (user.followers || []).length;
+        loadNetworkStats();
+        updateFollowingCount();
+      } catch (error) {
+        console.error('Error toggling follow:', error);
+        alert(error.message || 'Failed to update follow status');
+      }
+    }
+
+    // Initialize additional dashboard features
+    setTimeout(() => {
+      updateFollowingCount();
+      checkNotifications();
+    }, 500);
   </script>
 </body>
 </html>

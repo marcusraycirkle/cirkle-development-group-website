@@ -436,6 +436,197 @@ const routes = {
     });
   },
 
+  // Get all users (for search/discovery)
+  'GET /api/users': async (request, env) => {
+    const url = new URL(request.url);
+    const search = url.searchParams.get('search') || '';
+    
+    // List all users from KV
+    const userKeys = await env.USERS.list({ prefix: 'user:' });
+    const users = [];
+    
+    for (const key of userKeys.keys) {
+      const userData = await env.USERS.get(key.name);
+      if (userData) {
+        const user = JSON.parse(userData);
+        // Filter by search if provided
+        if (search) {
+          const searchLower = search.toLowerCase();
+          if (!user.username.toLowerCase().includes(searchLower) && 
+              !(user.nickname && user.nickname.toLowerCase().includes(searchLower))) {
+            continue;
+          }
+        }
+        // Remove sensitive info
+        delete user.email;
+        delete user.discordDiscriminator;
+        users.push(user);
+      }
+    }
+    
+    return new Response(JSON.stringify({ users }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Follow a user
+  'POST /api/users/:id/follow': async (request, env, params) => {
+    const currentUser = await getAuthUser(request, env);
+    if (!currentUser) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const targetUserId = params.id;
+    
+    if (currentUser.id === targetUserId) {
+      return new Response(JSON.stringify({ error: 'Cannot follow yourself' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get target user
+    const targetUserData = await env.USERS.get(`user:${targetUserId}`);
+    if (!targetUserData) {
+      return new Response(JSON.stringify({ error: 'User not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const targetUser = JSON.parse(targetUserData);
+
+    // Initialize arrays if needed
+    if (!currentUser.following) currentUser.following = [];
+    if (!targetUser.followers) targetUser.followers = [];
+
+    // Check if already following
+    if (currentUser.following.includes(targetUserId)) {
+      return new Response(JSON.stringify({ error: 'Already following this user' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Add follow relationship
+    currentUser.following.push(targetUserId);
+    targetUser.followers.push(currentUser.id);
+
+    // Save both users
+    await env.USERS.put(`user:${currentUser.id}`, JSON.stringify(currentUser));
+    await env.USERS.put(`discord:${currentUser.discordId}`, JSON.stringify(currentUser));
+    await env.USERS.put(`user:${targetUser.id}`, JSON.stringify(targetUser));
+    await env.USERS.put(`discord:${targetUser.discordId}`, JSON.stringify(targetUser));
+
+    // Create notification for target user
+    const notification = {
+      id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: 'new_follower',
+      fromUserId: currentUser.id,
+      fromUsername: currentUser.nickname || currentUser.username,
+      fromPhoto: currentUser.profilePhoto,
+      message: `${currentUser.nickname || currentUser.username} started following you`,
+      timestamp: new Date().toISOString(),
+      read: false,
+    };
+    
+    // Store notification
+    const notifKey = `notifications:${targetUserId}`;
+    const existingNotifs = await env.USERS.get(notifKey);
+    const notifications = existingNotifs ? JSON.parse(existingNotifs) : [];
+    notifications.unshift(notification);
+    await env.USERS.put(notifKey, JSON.stringify(notifications.slice(0, 50))); // Keep last 50
+
+    return new Response(JSON.stringify({ success: true, following: currentUser.following }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Unfollow a user
+  'DELETE /api/users/:id/follow': async (request, env, params) => {
+    const currentUser = await getAuthUser(request, env);
+    if (!currentUser) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const targetUserId = params.id;
+
+    // Get target user
+    const targetUserData = await env.USERS.get(`user:${targetUserId}`);
+    if (!targetUserData) {
+      return new Response(JSON.stringify({ error: 'User not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const targetUser = JSON.parse(targetUserData);
+
+    // Initialize arrays if needed
+    if (!currentUser.following) currentUser.following = [];
+    if (!targetUser.followers) targetUser.followers = [];
+
+    // Remove follow relationship
+    currentUser.following = currentUser.following.filter(id => id !== targetUserId);
+    targetUser.followers = targetUser.followers.filter(id => id !== currentUser.id);
+
+    // Save both users
+    await env.USERS.put(`user:${currentUser.id}`, JSON.stringify(currentUser));
+    await env.USERS.put(`discord:${currentUser.discordId}`, JSON.stringify(currentUser));
+    await env.USERS.put(`user:${targetUser.id}`, JSON.stringify(targetUser));
+    await env.USERS.put(`discord:${targetUser.discordId}`, JSON.stringify(targetUser));
+
+    return new Response(JSON.stringify({ success: true, following: currentUser.following }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Get notifications
+  'GET /api/notifications': async (request, env) => {
+    const user = await getAuthUser(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const notifKey = `notifications:${user.id}`;
+    const existingNotifs = await env.USERS.get(notifKey);
+    const notifications = existingNotifs ? JSON.parse(existingNotifs) : [];
+
+    return new Response(JSON.stringify({ notifications }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Mark notifications as read
+  'PUT /api/notifications/read': async (request, env) => {
+    const user = await getAuthUser(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const notifKey = `notifications:${user.id}`;
+    const existingNotifs = await env.USERS.get(notifKey);
+    const notifications = existingNotifs ? JSON.parse(existingNotifs) : [];
+
+    // Mark all as read
+    notifications.forEach(n => n.read = true);
+    await env.USERS.put(notifKey, JSON.stringify(notifications));
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
   // Logout
   'POST /api/auth/logout': async (request, env) => {
     const authHeader = request.headers.get('Authorization');
@@ -541,20 +732,22 @@ const routes = {
       });
     }
 
-    const { title, content, bannerImage, thumbnailImage } = await request.json();
+    const { title, content, bannerImage, thumbnailImage, originalAuthor, commentsDisabled } = await request.json();
     
     const blogId = Date.now();
     const newBlog = {
       id: blogId,
       title,
       content,
-      authorNickname: user.nickname || user.username,
+      authorNickname: originalAuthor || user.nickname || user.username,
       authorId: user.id,
       authorUsername: user.username,
       authorEmail: user.email || 'info@cirkledevelopment.co.uk',
+      originalAuthor: originalAuthor || null,
       publishDate: new Date().toISOString(),
       bannerImage: bannerImage || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&h=400&fit=crop',
       thumbnailImage: thumbnailImage || bannerImage || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=400&fit=crop',
+      commentsDisabled: commentsDisabled || false,
       comments: []
     };
 
@@ -575,7 +768,7 @@ const routes = {
       });
     }
 
-    const { content } = await request.json();
+    const { content, mentions } = await request.json();
     const blogData = await env.BLOGS.get(`blog:${params.id}`);
     
     if (!blogData) {
@@ -586,6 +779,15 @@ const routes = {
     }
 
     const blog = JSON.parse(blogData);
+    
+    // Check if comments are disabled
+    if (blog.commentsDisabled) {
+      return new Response(JSON.stringify({ error: 'Comments are disabled for this blog post' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     const newComment = {
       id: Date.now(),
       author: user.username,
@@ -593,6 +795,7 @@ const routes = {
       authorId: user.id,
       authorPhoto: user.profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=6b46c1&color=fff&size=128`,
       content,
+      mentions: mentions || [],
       timestamp: new Date().toISOString(),
       replies: []
     };
@@ -600,7 +803,54 @@ const routes = {
     blog.comments.push(newComment);
     await env.BLOGS.put(`blog:${params.id}`, JSON.stringify(blog));
 
+    // TODO: If mentions exist, queue Discord DM notifications
+    // This would require a Discord bot webhook or separate service
+
     return new Response(JSON.stringify({ success: true, comment: newComment }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Delete comment (admin only)
+  'DELETE /api/blogs/:id/comments/:commentId': async (request, env, params) => {
+    const user = await getUserFromRequest(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!user.isAdmin) {
+      return new Response(JSON.stringify({ error: 'Forbidden - Admin access required' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const blogData = await env.BLOGS.get(`blog:${params.id}`);
+    
+    if (!blogData) {
+      return new Response(JSON.stringify({ error: 'Blog not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const blog = JSON.parse(blogData);
+    const commentIndex = blog.comments.findIndex(c => c.id === parseInt(params.commentId));
+    
+    if (commentIndex === -1) {
+      return new Response(JSON.stringify({ error: 'Comment not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    blog.comments.splice(commentIndex, 1);
+    await env.BLOGS.put(`blog:${params.id}`, JSON.stringify(blog));
+
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   },
