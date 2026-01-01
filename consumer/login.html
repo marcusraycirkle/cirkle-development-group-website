@@ -105,32 +105,7 @@
         <h2>Forgot Password</h2>
         <button class="modal-close" onclick="closeForgotPassword()">&times;</button>
       </div>
-      <Enable/disable login button based on checkbox state
-    function updateLoginButton() {
-      const ageChecked = document.getElementById('age-agreement').checked;
-      const responsibleChecked = document.getElementById('responsible-use').checked;
-      const privacyChecked = document.getElementById('privacy-agreement').checked;
-      const loginBtn = document.getElementById('discord-login-btn');
-      
-      if (ageChecked && responsibleChecked && privacyChecked) {
-        loginBtn.disabled = false;
-        loginBtn.style.opacity = '1';
-        loginBtn.style.cursor = 'pointer';
-      } else {
-        loginBtn.disabled = true;
-        loginBtn.style.opacity = '0.5';
-        loginBtn.style.cursor = 'not-allowed';
-      }
-    }
-
-    // Add event listeners to checkboxes
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('age-agreement').addEventListener('change', updateLoginButton);
-      document.getElementById('responsible-use').addEventListener('change', updateLoginButton);
-      document.getElementById('privacy-agreement').addEventListener('change', updateLoginButton);
-    });
-
-    // div class="modal-body">
+      <div class="modal-body">
         <p style="color: #4a5568; line-height: 1.8; margin-bottom: 20px;">
           To reset your password, please open a support ticket in the <strong>Cirkle Development Discord server</strong>. Our support team will assist you with account recovery.
         </p>
@@ -152,6 +127,35 @@
   <script src="../js/auth.js"></script>
   <script>
     let currentUserData = null;
+
+    // Enable/disable login button based on checkbox state
+    function updateLoginButton() {
+      const ageChecked = document.getElementById('age-agreement').checked;
+      const responsibleChecked = document.getElementById('responsible-use').checked;
+      const privacyChecked = document.getElementById('privacy-agreement').checked;
+      const loginBtn = document.getElementById('discord-login-btn');
+      
+      if (ageChecked && responsibleChecked && privacyChecked) {
+        loginBtn.disabled = false;
+        loginBtn.style.opacity = '1';
+        loginBtn.style.cursor = 'pointer';
+      } else {
+        loginBtn.disabled = true;
+        loginBtn.style.opacity = '0.5';
+        loginBtn.style.cursor = 'not-allowed';
+      }
+    }
+
+    // Add event listeners to checkboxes when DOM is ready
+    window.addEventListener('DOMContentLoaded', () => {
+      const ageCheckbox = document.getElementById('age-agreement');
+      const responsibleCheckbox = document.getElementById('responsible-use');
+      const privacyCheckbox = document.getElementById('privacy-agreement');
+      
+      if (ageCheckbox) ageCheckbox.addEventListener('change', updateLoginButton);
+      if (responsibleCheckbox) responsibleCheckbox.addEventListener('change', updateLoginButton);
+      if (privacyCheckbox) privacyCheckbox.addEventListener('change', updateLoginButton);
+    });
 
     // Check if already logged in
     if (api.isLoggedIn()) {
