@@ -702,3 +702,74 @@
   .profile-name {
     display: none;
   }
+
+/* Rich Text Editor Styles */
+.editor-toolbar {
+  display: flex;
+  gap: 5px;
+  padding: 8px 10px;
+  background: #f7fafc;
+  border: 2px solid #e2e8f0;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.editor-toolbar button {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  min-width: 36px;
+}
+
+.editor-toolbar button:hover {
+  background: #6b46c1;
+  color: white;
+  border-color: #6b46c1;
+}
+
+.editor-toolbar button:active {
+  transform: scale(0.95);
+}
+
+.rich-editor {
+  width: 100%;
+  min-height: 200px;
+  padding: 15px;
+  border: 2px solid #e2e8f0;
+  border-top: 1px solid #e2e8f0;
+  border-radius: 0 0 8px 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.rich-editor:focus {
+  outline: none;
+  border-color: #6b46c1;
+  box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.1);
+}
+
+.rich-editor:empty::before {
+  content: attr(placeholder);
+  color: #a0aec0;
+  pointer-events: none;
+}
+
+.rich-editor ul,
+.rich-editor ol {
+  margin: 10px 0;
+  padding-left: 25px;
+}
+
+.rich-editor li {
+  margin: 5px 0;
+}

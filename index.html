@@ -228,13 +228,21 @@
               <input type="text" id="create-blog-title" required placeholder="Enter blog headline">
             </div>
             <div class="form-group">
-              <label for="create-blog-content">Body / Content *</label>
-              <textarea id="create-blog-content" required placeholder="Write your blog content here..." style="min-height: 200px;"></textarea>
+              <label>Body / Content *</label>
+              <div class="editor-toolbar">
+                <button type="button" onclick="formatText('bold')" title="Bold (Ctrl+B)"><b>B</b></button>
+                <button type="button" onclick="formatText('italic')" title="Italic (Ctrl+I)"><i>I</i></button>
+                <button type="button" onclick="formatText('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
+                <span style="border-left: 1px solid #ccc; margin: 0 8px;"></span>
+                <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+              </div>
+              <div id="create-blog-content" contenteditable="true" class="rich-editor" placeholder="Write your blog content here..."></div>
             </div>
             <div class="form-group">
               <label for="create-blog-banner">Banner Image URL (Optional)</label>
-              <input type="url" id="create-blog-banner" placeholder="https://example.com/image.jpg">
-              <small style="color: #718096; font-size: 13px;">Leave empty for default gradient banner</small>
+              <input type="text" id="create-blog-banner" placeholder="https://example.com/image.jpg or Google Drive link">
+              <small style="color: #718096; font-size: 13px;">Supports direct image URLs and Google Drive share links</small>
             </div>
             <div class="form-group">
               <label for="create-blog-original-author">Original Author (Optional)</label>
@@ -377,11 +385,43 @@
     function closeCreateBlogModal() {
       document.getElementById('create-blog-modal').style.display = 'none';
       document.getElementById('create-blog-title').value = '';
-      document.getElementById('create-blog-content').value = '';
+      document.getElementById('create-blog-content').innerHTML = '';
       document.getElementById('create-blog-banner').value = '';
       document.getElementById('create-blog-original-author').value = '';
       document.getElementById('create-blog-disable-comments').checked = false;
       document.getElementById('blog-message').textContent = '';
+    }
+    
+    // Rich text editor formatting
+    function formatText(command) {
+      document.execCommand(command, false, null);
+      document.getElementById('create-blog-content').focus();
+    }
+    
+    // Convert Google Drive links to embeddable format
+    function convertGoogleDriveLink(url) {
+      if (!url) return url;
+      
+      // Check for Google Drive file links
+      // Format: https://drive.google.com/file/d/FILE_ID/view...
+      const driveFileMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (driveFileMatch) {
+        return `https://drive.google.com/uc?export=view&id=${driveFileMatch[1]}`;
+      }
+      
+      // Format: https://drive.google.com/open?id=FILE_ID
+      const driveOpenMatch = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+      if (driveOpenMatch) {
+        return `https://drive.google.com/uc?export=view&id=${driveOpenMatch[1]}`;
+      }
+      
+      // Format: https://drive.google.com/uc?id=FILE_ID (already correct but might need export param)
+      const driveUcMatch = url.match(/drive\.google\.com\/uc\?.*id=([a-zA-Z0-9_-]+)/);
+      if (driveUcMatch && !url.includes('export=view')) {
+        return `https://drive.google.com/uc?export=view&id=${driveUcMatch[1]}`;
+      }
+      
+      return url;
     }
     
     async function submitBlog(event) {
@@ -389,10 +429,18 @@
       
       const messageDiv = document.getElementById('blog-message');
       const title = document.getElementById('create-blog-title').value.trim();
-      const content = document.getElementById('create-blog-content').value.trim();
-      const banner = document.getElementById('create-blog-banner').value.trim();
+      const content = document.getElementById('create-blog-content').innerHTML.trim();
+      const bannerRaw = document.getElementById('create-blog-banner').value.trim();
+      const banner = convertGoogleDriveLink(bannerRaw);
       const originalAuthor = document.getElementById('create-blog-original-author').value.trim();
       const commentsDisabled = document.getElementById('create-blog-disable-comments').checked;
+      
+      // Validate content
+      if (!content || content === '<br>' || content === '<div><br></div>') {
+        messageDiv.textContent = 'Please enter blog content';
+        messageDiv.style.color = '#e53e3e';
+        return;
+      }
       
       try {
         messageDiv.textContent = 'Publishing...';
