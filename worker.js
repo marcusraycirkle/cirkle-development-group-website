@@ -53,6 +53,37 @@ async function verifyToken(token, secret) {
   }
 }
 
+// Helper function to find a reply by ID (including nested)
+function findReplyById(replies, replyId) {
+  for (const reply of replies) {
+    if (reply.id === replyId) return reply;
+    if (reply.replies && reply.replies.length > 0) {
+      const found = findReplyById(reply.replies, replyId);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// Helper function to remove a reply by ID (including nested)
+function removeReplyById(replies, replyId, user) {
+  for (let i = 0; i < replies.length; i++) {
+    if (replies[i].id === replyId) {
+      // Check if user is authorized (author or admin)
+      if (replies[i].authorId !== user.id && !user.isAdmin) {
+        return { found: true, authorized: false };
+      }
+      replies.splice(i, 1);
+      return { found: true, authorized: true };
+    }
+    if (replies[i].replies && replies[i].replies.length > 0) {
+      const result = removeReplyById(replies[i].replies, replyId, user);
+      if (result.found) return result;
+    }
+  }
+  return { found: false, authorized: false };
+}
+
 // Helper to get authenticated user from request
 async function getAuthUser(request, env) {
   const authHeader = request.headers.get('Authorization');
@@ -998,7 +1029,7 @@ const routes = {
     });
   },
 
-  // Add reply to comment
+  // Add reply to comment (supports nested replies via parentReplyId)
   'POST /api/blogs/:id/comments/:commentId/replies': async (request, env, params) => {
     const user = await getAuthUser(request, env);
     if (!user) {
@@ -1008,7 +1039,7 @@ const routes = {
       });
     }
 
-    const { content } = await request.json();
+    const { content, imageUrl, parentReplyId } = await request.json();
     const blogData = await env.BLOGS.get(`blog:${params.id}`);
     
     if (!blogData) {
@@ -1035,13 +1066,88 @@ const routes = {
       authorId: user.id,
       authorPhoto: user.profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=6b46c1&color=fff&size=128`,
       content,
-      timestamp: new Date().toISOString()
+      imageUrl: imageUrl || null,
+      parentReplyId: parentReplyId || null, // For nested replies
+      timestamp: new Date().toISOString(),
+      replies: [] // Nested replies array
     };
 
-    comment.replies.push(newReply);
+    // If it's a reply to another reply, find and nest it
+    if (parentReplyId) {
+      const parentReply = findReplyById(comment.replies, parentReplyId);
+      if (parentReply) {
+        if (!parentReply.replies) parentReply.replies = [];
+        parentReply.replies.push(newReply);
+      } else {
+        // Fallback to top-level if parent not found
+        comment.replies.push(newReply);
+      }
+    } else {
+      comment.replies.push(newReply);
+    }
+    
     await env.BLOGS.put(`blog:${params.id}`, JSON.stringify(blog));
 
+    // Increment commentsPosted stat
+    if (!user.activityStats) user.activityStats = { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
+    user.activityStats.commentsPosted = (user.activityStats.commentsPosted || 0) + 1;
+    await env.USERS.put(`user:${user.id}`, JSON.stringify(user));
+    await env.USERS.put(`discord:${user.discordId}`, JSON.stringify(user));
+
     return new Response(JSON.stringify({ success: true, reply: newReply }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Delete reply (author or admin)
+  'DELETE /api/blogs/:id/comments/:commentId/replies/:replyId': async (request, env, params) => {
+    const user = await getAuthUser(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const blogData = await env.BLOGS.get(`blog:${params.id}`);
+    if (!blogData) {
+      return new Response(JSON.stringify({ error: 'Blog not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const blog = JSON.parse(blogData);
+    const comment = blog.comments.find(c => c.id === parseInt(params.commentId));
+    
+    if (!comment) {
+      return new Response(JSON.stringify({ error: 'Comment not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Find and remove the reply (including nested)
+    const replyId = parseInt(params.replyId);
+    const result = removeReplyById(comment.replies, replyId, user);
+    
+    if (!result.found) {
+      return new Response(JSON.stringify({ error: 'Reply not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (!result.authorized) {
+      return new Response(JSON.stringify({ error: 'Not authorized to delete this reply' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    await env.BLOGS.put(`blog:${params.id}`, JSON.stringify(blog));
+
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   },

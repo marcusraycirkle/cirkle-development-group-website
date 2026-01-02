@@ -135,6 +135,9 @@ async function loadBlogPost(blogId) {
     return;
   }
 
+  // Store blog data for modal access
+  currentBlogData = blog;
+
   // Track view and increment user interaction if logged in
   if (api.isLoggedIn()) {
     try {
@@ -282,12 +285,16 @@ async function checkCurrentUser() {
   }
 }
 
+// Store current blog data for modal access
+let currentBlogData = null;
+
 function renderComments(comments, blogId) {
   return comments.map(comment => {
     const commentDate = new Date(comment.timestamp);
     const timeAgo = getTimeAgo(commentDate);
     const replies = comment.replies || [];
     const isAdmin = currentUserInfo && currentUserInfo.isAdmin;
+    const totalReplies = countAllReplies(replies);
 
     return `
       <div class="comment" id="comment-${comment.id}">
@@ -300,35 +307,69 @@ function renderComments(comments, blogId) {
           ` : ''}
         </div>
         <div class="comment-content">${formatMentions(comment.content)}</div>
-        ${api.isLoggedIn() ? `
-          <button onclick="showReplyForm(${comment.id})" class="reply-btn" style="background: none; border: none; color: #6b46c1; cursor: pointer; font-size: 13px; margin-top: 8px;">Reply</button>
-          <div id="reply-form-${comment.id}" style="display: none; margin-top: 10px;">
-            <textarea id="reply-text-${comment.id}" placeholder="Write a reply..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; resize: vertical; min-height: 60px;"></textarea>
-            <div style="margin-top: 8px; display: flex; gap: 8px;">
-              <button onclick="submitReply(${comment.id})" class="comment-submit" style="padding: 8px 16px; font-size: 14px;">Post Reply</button>
-              <button onclick="hideReplyForm(${comment.id})" style="padding: 8px 16px; font-size: 14px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
-            </div>
-            <div id="reply-message-${comment.id}" class="success-message" style="margin-top: 8px;"></div>
+        <div style="display: flex; gap: 15px; margin-top: 10px; align-items: center;">
+          ${api.isLoggedIn() ? `
+            <button onclick="showReplyForm(${comment.id})" class="reply-btn" style="background: none; border: none; color: #6b46c1; cursor: pointer; font-size: 13px;">💬 Reply</button>
+          ` : ''}
+          ${totalReplies > 0 ? `
+            <button onclick="openCommentThread(${blogId}, ${comment.id})" style="background: none; border: none; color: #718096; cursor: pointer; font-size: 13px;">
+              📖 View ${totalReplies} ${totalReplies === 1 ? 'reply' : 'replies'}
+            </button>
+          ` : ''}
+        </div>
+        <div id="reply-form-${comment.id}" style="display: none; margin-top: 10px;">
+          <textarea id="reply-text-${comment.id}" placeholder="Write a reply..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; resize: vertical; min-height: 60px;"></textarea>
+          <div style="margin-top: 8px;">
+            <input type="url" id="reply-image-${comment.id}" placeholder="Image URL (optional)" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; margin-bottom: 8px;">
           </div>
-        ` : ''}
+          <div style="display: flex; gap: 8px;">
+            <button onclick="submitReply(${comment.id})" class="comment-submit" style="padding: 8px 16px; font-size: 14px;">Post Reply</button>
+            <button onclick="hideReplyForm(${comment.id})" style="padding: 8px 16px; font-size: 14px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+          </div>
+          <div id="reply-message-${comment.id}" class="success-message" style="margin-top: 8px;"></div>
+        </div>
         ${replies.length > 0 ? `
-          <div class="replies" style="margin-left: 40px; margin-top: 15px; padding-left: 15px; border-left: 2px solid #e2e8f0;">
-            ${replies.map(reply => {
-              const replyDate = new Date(reply.timestamp);
-              const replyTimeAgo = getTimeAgo(replyDate);
-              return `
-                <div class="comment" style="margin-bottom: 10px;">
-                  <div class="comment-header">
-                    <img src="${reply.authorPhoto}" alt="${reply.author}" class="comment-avatar" style="width: 30px; height: 30px; cursor: pointer;" onclick="openUserProfile(${reply.authorId})">
-                    <span class="comment-author" style="cursor: pointer;" onclick="openUserProfile(${reply.authorId})">${reply.authorNickname || reply.author}</span>
-                    <span class="comment-time">${replyTimeAgo}</span>
-                  </div>
-                  <div class="comment-content">${formatMentions(reply.content)}</div>
-                </div>
-              `;
-            }).join('')}
+          <div class="replies-preview" style="margin-left: 40px; margin-top: 15px; padding-left: 15px; border-left: 2px solid #e2e8f0;">
+            ${renderReplyPreview(replies.slice(0, 2), blogId, comment.id)}
+            ${replies.length > 2 ? `<button onclick="openCommentThread(${blogId}, ${comment.id})" style="background: none; border: none; color: #6b46c1; cursor: pointer; font-size: 13px; margin-top: 10px;">View all ${totalReplies} replies →</button>` : ''}
           </div>
         ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// Count all replies including nested
+function countAllReplies(replies) {
+  let count = replies.length;
+  for (const reply of replies) {
+    if (reply.replies && reply.replies.length > 0) {
+      count += countAllReplies(reply.replies);
+    }
+  }
+  return count;
+}
+
+// Render preview of first few replies
+function renderReplyPreview(replies, blogId, commentId) {
+  return replies.map(reply => {
+    const replyDate = new Date(reply.timestamp);
+    const replyTimeAgo = getTimeAgo(replyDate);
+    const isAuthor = currentUserInfo && currentUserInfo.id === reply.authorId;
+    const isAdmin = currentUserInfo && currentUserInfo.isAdmin;
+    
+    return `
+      <div class="comment" style="margin-bottom: 10px;">
+        <div class="comment-header">
+          <img src="${reply.authorPhoto}" alt="${reply.author}" class="comment-avatar" style="width: 30px; height: 30px; cursor: pointer;" onclick="openUserProfile(${reply.authorId})">
+          <span class="comment-author" style="cursor: pointer;" onclick="openUserProfile(${reply.authorId})">${reply.authorNickname || reply.author}</span>
+          <span class="comment-time">${replyTimeAgo}</span>
+          ${(isAuthor || isAdmin) ? `
+            <button onclick="deleteReply(${blogId}, ${commentId}, ${reply.id})" style="margin-left: auto; background: #e53e3e; color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">🗑️</button>
+          ` : ''}
+        </div>
+        <div class="comment-content">${formatMentions(reply.content)}</div>
+        ${reply.imageUrl ? `<img src="${reply.imageUrl}" alt="Reply image" style="max-width: 100%; max-height: 300px; border-radius: 8px; margin-top: 8px;">` : ''}
       </div>
     `;
   }).join('');
@@ -346,6 +387,248 @@ function formatMentions(content) {
   
   return formatted;
 }
+
+// ===== COMMENT THREAD MODAL =====
+function openCommentThread(blogId, commentId) {
+  const comment = currentBlogData.comments.find(c => c.id === commentId);
+  if (!comment) return;
+  
+  const modal = document.createElement('div');
+  modal.id = 'comment-thread-modal';
+  modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; justify-content: center; align-items: center;';
+  
+  const content = document.createElement('div');
+  content.style.cssText = 'background: white; width: 90%; max-width: 700px; max-height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;';
+  
+  content.innerHTML = `
+    <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0; color: #2d3748;">💬 Comment Thread</h2>
+      <button onclick="closeCommentThread()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #718096;">&times;</button>
+    </div>
+    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+      <!-- Original Comment -->
+      <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+          <img src="${comment.authorPhoto}" alt="${comment.author}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+          <div>
+            <div style="font-weight: 600; color: #2d3748;">${comment.authorNickname || comment.author}</div>
+            <div style="font-size: 13px; color: #718096;">${getTimeAgo(new Date(comment.timestamp))}</div>
+          </div>
+        </div>
+        <div style="color: #4a5568; line-height: 1.6;">${formatMentions(comment.content)}</div>
+      </div>
+      
+      <!-- Reply Form -->
+      ${api.isLoggedIn() ? `
+        <div style="margin-bottom: 20px; padding: 15px; background: #faf5ff; border-radius: 8px;">
+          <textarea id="thread-reply-text" placeholder="Write a reply..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; resize: vertical; min-height: 80px;"></textarea>
+          <input type="url" id="thread-reply-image" placeholder="Image URL (optional)" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; margin-top: 8px;">
+          <button onclick="submitThreadReply(${blogId}, ${commentId})" class="comment-submit" style="margin-top: 10px; padding: 10px 20px;">Post Reply</button>
+          <div id="thread-reply-message" class="success-message" style="margin-top: 8px;"></div>
+        </div>
+      ` : '<p style="color: #718096; text-align: center; margin-bottom: 20px;">Log in to reply</p>'}
+      
+      <!-- All Replies -->
+      <h3 style="color: #4a5568; margin-bottom: 15px;">Replies (${countAllReplies(comment.replies || [])})</h3>
+      <div id="thread-replies-container">
+        ${renderAllReplies(comment.replies || [], blogId, commentId, 0)}
+      </div>
+    </div>
+  `;
+  
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCommentThread() {
+  const modal = document.getElementById('comment-thread-modal');
+  if (modal) {
+    modal.remove();
+    document.body.style.overflow = '';
+  }
+}
+
+// Render all replies with nesting
+function renderAllReplies(replies, blogId, commentId, depth) {
+  if (!replies || replies.length === 0) return '<p style="color: #718096; text-align: center;">No replies yet</p>';
+  
+  return replies.map(reply => {
+    const replyDate = new Date(reply.timestamp);
+    const replyTimeAgo = getTimeAgo(replyDate);
+    const isAuthor = currentUserInfo && currentUserInfo.id === reply.authorId;
+    const isAdmin = currentUserInfo && currentUserInfo.isAdmin;
+    const nestedReplies = reply.replies || [];
+    const marginLeft = Math.min(depth * 20, 60); // Cap at 60px
+    
+    return `
+      <div style="margin-left: ${marginLeft}px; margin-bottom: 15px; padding: 12px; background: ${depth % 2 === 0 ? '#ffffff' : '#f9fafb'}; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+          <img src="${reply.authorPhoto}" alt="${reply.author}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; cursor: pointer;" onclick="openUserProfile(${reply.authorId})">
+          <div style="flex: 1;">
+            <span style="font-weight: 600; color: #2d3748; cursor: pointer;" onclick="openUserProfile(${reply.authorId})">${reply.authorNickname || reply.author}</span>
+            <span style="color: #718096; font-size: 13px; margin-left: 8px;">${replyTimeAgo}</span>
+          </div>
+          ${(isAuthor || isAdmin) ? `
+            <button onclick="deleteReply(${blogId}, ${commentId}, ${reply.id})" style="background: #fee2e2; color: #dc2626; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">🗑️ Delete</button>
+          ` : ''}
+        </div>
+        <div style="color: #4a5568; line-height: 1.5;">${formatMentions(reply.content)}</div>
+        ${reply.imageUrl ? `<img src="${reply.imageUrl}" alt="Reply image" style="max-width: 100%; max-height: 400px; border-radius: 8px; margin-top: 10px;">` : ''}
+        
+        <div style="margin-top: 10px; display: flex; gap: 10px;">
+          ${api.isLoggedIn() ? `
+            <button onclick="showNestedReplyForm(${blogId}, ${commentId}, ${reply.id})" style="background: none; border: none; color: #6b46c1; cursor: pointer; font-size: 13px;">↩️ Reply</button>
+          ` : ''}
+        </div>
+        
+        <div id="nested-reply-form-${reply.id}" style="display: none; margin-top: 10px; padding: 10px; background: #faf5ff; border-radius: 8px;">
+          <textarea id="nested-reply-text-${reply.id}" placeholder="Reply to ${reply.authorNickname || reply.author}..." style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: inherit; resize: vertical; min-height: 60px;"></textarea>
+          <input type="url" id="nested-reply-image-${reply.id}" placeholder="Image URL (optional)" style="width: 100%; padding: 6px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; margin-top: 6px;">
+          <div style="margin-top: 8px; display: flex; gap: 8px;">
+            <button onclick="submitNestedReply(${blogId}, ${commentId}, ${reply.id})" class="comment-submit" style="padding: 6px 12px; font-size: 13px;">Post</button>
+            <button onclick="hideNestedReplyForm(${reply.id})" style="padding: 6px 12px; font-size: 13px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+          </div>
+          <div id="nested-reply-message-${reply.id}" class="success-message" style="margin-top: 6px; font-size: 13px;"></div>
+        </div>
+        
+        ${nestedReplies.length > 0 ? renderAllReplies(nestedReplies, blogId, commentId, depth + 1) : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function showNestedReplyForm(blogId, commentId, replyId) {
+  document.getElementById(`nested-reply-form-${replyId}`).style.display = 'block';
+}
+
+function hideNestedReplyForm(replyId) {
+  document.getElementById(`nested-reply-form-${replyId}`).style.display = 'none';
+}
+
+async function submitThreadReply(blogId, commentId) {
+  const textArea = document.getElementById('thread-reply-text');
+  const imageInput = document.getElementById('thread-reply-image');
+  const messageDiv = document.getElementById('thread-reply-message');
+  
+  if (!textArea.value.trim()) {
+    messageDiv.textContent = 'Please write a reply';
+    messageDiv.className = 'error-message';
+    messageDiv.style.display = 'block';
+    return;
+  }
+  
+  try {
+    messageDiv.textContent = 'Posting...';
+    messageDiv.className = 'success-message';
+    messageDiv.style.display = 'block';
+    
+    const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/blogs/${blogId}/comments/${commentId}/replies`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        content: textArea.value.trim(),
+        imageUrl: imageInput.value.trim() || null
+      })
+    });
+    
+    if (response.ok) {
+      messageDiv.textContent = 'Reply posted!';
+      textArea.value = '';
+      imageInput.value = '';
+      
+      // Refresh the thread
+      setTimeout(() => {
+        closeCommentThread();
+        loadBlogPost(blogId);
+      }, 1000);
+    } else {
+      const data = await response.json();
+      messageDiv.textContent = data.error || 'Failed to post reply';
+      messageDiv.className = 'error-message';
+    }
+  } catch (error) {
+    messageDiv.textContent = 'Failed to post reply';
+    messageDiv.className = 'error-message';
+  }
+}
+
+async function submitNestedReply(blogId, commentId, parentReplyId) {
+  const textArea = document.getElementById(`nested-reply-text-${parentReplyId}`);
+  const imageInput = document.getElementById(`nested-reply-image-${parentReplyId}`);
+  const messageDiv = document.getElementById(`nested-reply-message-${parentReplyId}`);
+  
+  if (!textArea.value.trim()) {
+    messageDiv.textContent = 'Please write a reply';
+    messageDiv.className = 'error-message';
+    messageDiv.style.display = 'block';
+    return;
+  }
+  
+  try {
+    messageDiv.textContent = 'Posting...';
+    messageDiv.className = 'success-message';
+    messageDiv.style.display = 'block';
+    
+    const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/blogs/${blogId}/comments/${commentId}/replies`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        content: textArea.value.trim(),
+        imageUrl: imageInput.value.trim() || null,
+        parentReplyId: parentReplyId
+      })
+    });
+    
+    if (response.ok) {
+      messageDiv.textContent = 'Reply posted!';
+      
+      // Refresh the thread
+      setTimeout(() => {
+        closeCommentThread();
+        loadBlogPost(blogId);
+      }, 1000);
+    } else {
+      const data = await response.json();
+      messageDiv.textContent = data.error || 'Failed to post reply';
+      messageDiv.className = 'error-message';
+    }
+  } catch (error) {
+    messageDiv.textContent = 'Failed to post reply';
+    messageDiv.className = 'error-message';
+  }
+}
+
+async function deleteReply(blogId, commentId, replyId) {
+  if (!confirm('Are you sure you want to delete this reply?')) return;
+  
+  try {
+    const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/blogs/${blogId}/comments/${commentId}/replies/${replyId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      }
+    });
+    
+    if (response.ok) {
+      // Refresh
+      closeCommentThread();
+      loadBlogPost(blogId);
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Failed to delete reply');
+    }
+  } catch (error) {
+    alert('Failed to delete reply');
+  }
+}
+// ===== END COMMENT THREAD MODAL =====
 
 // ===== COMMENT @MENTION FUNCTIONALITY =====
 let commentMentionData = {
@@ -660,6 +943,7 @@ function hideReplyForm(commentId) {
 
 async function submitReply(commentId) {
   const replyText = document.getElementById(`reply-text-${commentId}`);
+  const replyImage = document.getElementById(`reply-image-${commentId}`);
   const messageDiv = document.getElementById(`reply-message-${commentId}`);
   
   if (!replyText.value.trim()) {
@@ -687,7 +971,10 @@ async function submitReply(commentId) {
         'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ content: replyText.value.trim() })
+      body: JSON.stringify({ 
+        content: replyText.value.trim(),
+        imageUrl: replyImage ? (replyImage.value.trim() || null) : null
+      })
     });
     
     const data = await response.json();
@@ -701,6 +988,7 @@ async function submitReply(commentId) {
     if (response.ok && data.success) {
       messageDiv.textContent = 'Reply posted!';
       replyText.value = '';
+      if (replyImage) replyImage.value = '';
       
       // Reload blog to show new reply
       setTimeout(() => {
