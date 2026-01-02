@@ -75,6 +75,10 @@ async function loadBlogs() {
         month: 'long', 
         year: 'numeric' 
       });
+      const formattedTime = date.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
 
       // Create excerpt (first 150 characters)
       const tempDiv = document.createElement('div');
@@ -89,7 +93,7 @@ async function loadBlogs() {
           <div class="blog-card-meta">
             <div>
               <span class="blog-author" onclick="event.stopPropagation();">By ${blog.authorNickname || blog.authorUsername}</span>
-              <span class="blog-date"> • ${formattedDate}</span>
+              <span class="blog-date"> • ${formattedDate} at ${formattedTime}</span>
             </div>
             <div style="display: flex; gap: 12px;">
               <span class="blog-views" style="color: #718096;">👁️ ${blog.viewCount || 0}</span>
@@ -138,6 +142,10 @@ async function loadBlogPost(blogId) {
     month: 'long', 
     year: 'numeric' 
   });
+  const formattedTime = date.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 
   const authorName = blog.authorNickname || blog.authorUsername || blog.author || 'Anonymous';
   const authorInitial = authorName.charAt(0).toUpperCase();
@@ -171,7 +179,7 @@ async function loadBlogPost(blogId) {
           </div>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-          <div class="blog-post-date">${formattedDate}</div>
+          <div class="blog-post-date">${formattedDate} at ${formattedTime}</div>
           <div style="color: #718096; font-size: 14px;">👁️ ${blog.viewCount || 0} views</div>
         </div>
       </div>
