@@ -699,18 +699,24 @@ const routes = {
     }
   },
 
-  // Get single blog
+  // Get single blog (also increments view count)
   'GET /api/blogs/:id': async (request, env, params) => {
-    const blog = await env.BLOGS.get(`blog:${params.id}`);
+    const blogData = await env.BLOGS.get(`blog:${params.id}`);
     
-    if (!blog) {
+    if (!blogData) {
       return new Response(JSON.stringify({ error: 'Blog not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    return new Response(JSON.stringify(JSON.parse(blog)), {
+    const blog = JSON.parse(blogData);
+    
+    // Increment view count
+    blog.viewCount = (blog.viewCount || 0) + 1;
+    await env.BLOGS.put(`blog:${params.id}`, JSON.stringify(blog));
+
+    return new Response(JSON.stringify(blog), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   },
@@ -748,6 +754,7 @@ const routes = {
       bannerImage: bannerImage || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&h=400&fit=crop',
       thumbnailImage: thumbnailImage || bannerImage || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=400&fit=crop',
       commentsDisabled: commentsDisabled || false,
+      viewCount: 0,
       comments: []
     };
 

@@ -315,6 +315,46 @@
     </div>
   </div>
 
+  <!-- Create Blog Modal (Admin Only) -->
+  <div id="create-blog-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2>Create Blog Post</h2>
+        <button class="modal-close" onclick="closeCreateBlogModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="submitBlog(event)">
+          <div class="form-group">
+            <label for="blog-title">Headline *</label>
+            <input type="text" id="blog-title" required placeholder="Enter blog headline">
+          </div>
+          <div class="form-group">
+            <label for="blog-content">Body / Content *</label>
+            <textarea id="blog-content" required placeholder="Write your blog content here..." style="min-height: 200px;"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="blog-banner">Banner Image URL (Optional)</label>
+            <input type="url" id="blog-banner" placeholder="https://example.com/image.jpg">
+            <small style="color: #718096; font-size: 13px;">Leave empty for default gradient banner</small>
+          </div>
+          <div class="form-group">
+            <label for="blog-original-author">Original Author (Optional)</label>
+            <input type="text" id="blog-original-author" placeholder="If reposting content, credit the original author">
+            <small style="color: #718096; font-size: 13px;">Leave empty to use your name as author</small>
+          </div>
+          <div class="form-group">
+            <label style="display: flex; align-items: center; cursor: pointer; gap: 10px;">
+              <input type="checkbox" id="blog-disable-comments" style="width: 20px; height: 20px; cursor: pointer;">
+              <span>Disable comments on this post</span>
+            </label>
+          </div>
+          <div id="blog-message" class="success-message"></div>
+          <button type="submit" class="auth-btn">Publish Blog Post</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <footer>
     © Cirkle Development Group 2025 | <a href="mailto:info@cirkledevelopment.co.uk">info@cirkledevelopment.co.uk</a>
   </footer>
@@ -389,7 +429,7 @@
           card.innerHTML = `
             <h2>✍️ Post Blog</h2>
             <p>Create a new blog post!</p>
-            <button onclick="window.location.href='../index.html#blog?create=true'" class="dashboard-btn">Create Post</button>
+            <button onclick="openCreateBlogModal()" class="dashboard-btn">Create Post</button>
           `;
         }
       }
@@ -823,6 +863,7 @@
       const searchModal = document.getElementById('search-modal');
       const followingModal = document.getElementById('following-modal');
       const notificationsModal = document.getElementById('notifications-modal');
+      const createBlogModal = document.getElementById('create-blog-modal');
       
       if (event.target === suggestionModal) closeSuggestionModal();
       if (event.target === settingsModal) closeSettingsModal();
@@ -832,6 +873,60 @@
       if (event.target === searchModal) closeSearchModal();
       if (event.target === followingModal) closeFollowingModal();
       if (event.target === notificationsModal) closeNotificationsModal();
+      if (event.target === createBlogModal) closeCreateBlogModal();
+    }
+
+    // Create Blog Modal Functions (Admin Only)
+    function openCreateBlogModal() {
+      document.getElementById('create-blog-modal').style.display = 'flex';
+    }
+
+    function closeCreateBlogModal() {
+      document.getElementById('create-blog-modal').style.display = 'none';
+      document.getElementById('blog-title').value = '';
+      document.getElementById('blog-content').value = '';
+      document.getElementById('blog-banner').value = '';
+      document.getElementById('blog-original-author').value = '';
+      document.getElementById('blog-disable-comments').checked = false;
+      document.getElementById('blog-message').textContent = '';
+    }
+
+    async function submitBlog(event) {
+      event.preventDefault();
+      
+      const messageDiv = document.getElementById('blog-message');
+      const title = document.getElementById('blog-title').value.trim();
+      const content = document.getElementById('blog-content').value.trim();
+      const banner = document.getElementById('blog-banner').value.trim();
+      const originalAuthor = document.getElementById('blog-original-author').value.trim();
+      const commentsDisabled = document.getElementById('blog-disable-comments').checked;
+      
+      try {
+        messageDiv.textContent = 'Publishing...';
+        messageDiv.style.color = '#4a5568';
+        
+        const blogData = {
+          title: title,
+          content: content,
+          thumbnailImage: banner || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
+          originalAuthor: originalAuthor || null,
+          commentsDisabled: commentsDisabled
+        };
+        
+        const result = await api.createBlog(blogData);
+        
+        messageDiv.textContent = '✓ Blog post published successfully! Redirecting...';
+        messageDiv.style.color = '#38a169';
+        
+        setTimeout(() => {
+          closeCreateBlogModal();
+          // Redirect to the new blog post
+          window.location.href = `../index.html#blog-post?id=${result.blog.id}`;
+        }, 1500);
+      } catch (error) {
+        messageDiv.textContent = error.message || 'Failed to publish blog post';
+        messageDiv.style.color = '#e53e3e';
+      }
     }
 
     // Search Modal Functions

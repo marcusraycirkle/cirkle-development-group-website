@@ -91,7 +91,10 @@ async function loadBlogs() {
               <span class="blog-author" onclick="event.stopPropagation();">By ${blog.authorNickname || blog.authorUsername}</span>
               <span class="blog-date"> • ${formattedDate}</span>
             </div>
-            <span class="blog-comments">💬 ${blog.comments.length}</span>
+            <div style="display: flex; gap: 12px;">
+              <span class="blog-views" style="color: #718096;">👁️ ${blog.viewCount || 0}</span>
+              <span class="blog-comments">💬 ${blog.comments.length}</span>
+            </div>
           </div>
         </div>
       `;
@@ -167,7 +170,10 @@ async function loadBlogPost(blogId) {
             <div class="author-email">${blog.authorEmail || 'info@cirkledevelopment.co.uk'}</div>
           </div>
         </div>
-        <div class="blog-post-date">${formattedDate}</div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+          <div class="blog-post-date">${formattedDate}</div>
+          <div style="color: #718096; font-size: 14px;">👁️ ${blog.viewCount || 0} views</div>
+        </div>
       </div>
     </div>
 
