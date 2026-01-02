@@ -334,10 +334,14 @@
     
     // Check if we should open create modal
     async function checkCreateBlogModal() {
-      if (window.location.hash.includes('create=true')) {
+      const fullHash = window.location.hash;
+      console.log('Checking create modal, hash:', fullHash);
+      
+      if (fullHash.includes('create=true')) {
         try {
           if (api.isLoggedIn()) {
             const user = await api.getCurrentUser();
+            console.log('User is admin:', user.isAdmin);
             if (user.isAdmin) {
               openCreateBlogModal();
               // Clear the create=true from URL to prevent reopening on refresh
@@ -353,14 +357,12 @@
     // Call when page loads and when navigating to blog page
     document.addEventListener('DOMContentLoaded', () => {
       updateBlogPageUI();
-      // Check on page load if we should open create modal
-      if (window.location.hash.startsWith('#blog')) {
-        setTimeout(checkCreateBlogModal, 300);
-      }
+      // Check on page load if we should open create modal (with delay to ensure page is ready)
+      setTimeout(checkCreateBlogModal, 500);
     });
     
     window.addEventListener('hashchange', () => {
-      if (window.location.hash.startsWith('#blog')) {
+      if (window.location.hash.includes('blog')) {
         updateBlogPageUI();
         // Auto-open create modal if URL has create=true
         setTimeout(checkCreateBlogModal, 300);

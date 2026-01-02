@@ -440,7 +440,9 @@ function handleHashChange() {
     showPage('blog-post');
     loadBlogPost(blogId);
   } else {
-    showPage(hash);
+    // Handle query parameters in hash (e.g., blog?create=true)
+    const pageId = hash.split('?')[0];
+    showPage(pageId);
   }
 }
 
