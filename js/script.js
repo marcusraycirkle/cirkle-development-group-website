@@ -204,9 +204,9 @@ async function loadBlogPost(blogId) {
       ` : `
         <div id="comment-form-container">
           ${api.isLoggedIn() ? `
-            <div class="comment-form">
+            <div class="comment-form" style="position: relative;">
               <textarea id="comment-text" placeholder="Share your thoughts... Type @ to mention someone" oninput="handleCommentInput(event)"></textarea>
-              <div id="mention-dropdown" style="display: none; position: absolute; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 150px; overflow-y: auto; z-index: 100;"></div>
+              <div id="mention-dropdown" class="mention-popup" style="display: none;"></div>
               <button class="comment-submit" onclick="submitComment()">Post Comment</button>
               <div id="comment-message" class="success-message" style="margin-top: 15px;"></div>
             </div>
@@ -295,13 +295,31 @@ function renderComments(comments, blogId) {
   }).join('');
 }
 
-// Format @mentions in content
+// Format @mentions in content - now handles both plain text @username and HTML mention spans
 function formatMentions(content) {
-  return content.replace(/@(\w+)/g, '<span style="color: #6b46c1; font-weight: 600;">@$1</span>');
+  // First handle span mentions from rich editor (data-username attribute)
+  let formatted = content.replace(/<span[^>]*class="mention"[^>]*data-username="([^"]+)"[^>]*>@\1<\/span>/g, 
+    '<span class="mention" style="color: #6b46c1; background: #f3e8ff; padding: 2px 4px; border-radius: 4px; font-weight: 600;">@$1</span>');
+  
+  // Then handle plain text @mentions (not already in a span)
+  formatted = formatted.replace(/(?<!<[^>]*)@(\w+)(?![^<]*>)/g, 
+    '<span class="mention" style="color: #6b46c1; background: #f3e8ff; padding: 2px 4px; border-radius: 4px; font-weight: 600;">@$1</span>');
+  
+  return formatted;
 }
 
-// Handle @ mention input
-function handleCommentInput(event) {
+// ===== COMMENT @MENTION FUNCTIONALITY =====
+let commentMentionData = {
+  dropdown: null,
+  textarea: null,
+  searchTerm: '',
+  selectedIndex: 0,
+  users: [],
+  atPosition: -1
+};
+
+// Handle @ mention input in comments
+async function handleCommentInput(event) {
   const textarea = event.target;
   const value = textarea.value;
   const cursorPos = textarea.selectionStart;
@@ -311,22 +329,145 @@ function handleCommentInput(event) {
   const atMatch = textBeforeCursor.match(/@(\w*)$/);
   
   const dropdown = document.getElementById('mention-dropdown');
+  if (!dropdown) return;
+  
+  commentMentionData.dropdown = dropdown;
+  commentMentionData.textarea = textarea;
   
   if (atMatch) {
-    // Show dropdown with user suggestions
-    // For now, we'll show a message that this feature is coming
-    dropdown.innerHTML = '<div style="padding: 10px; color: #718096; font-size: 13px;">@ mention feature - DM notifications coming soon!</div>';
-    dropdown.style.display = 'block';
+    commentMentionData.searchTerm = atMatch[1];
+    commentMentionData.atPosition = cursorPos - atMatch[0].length;
     
-    // Position dropdown near textarea
-    const rect = textarea.getBoundingClientRect();
-    dropdown.style.top = (rect.bottom + 5) + 'px';
-    dropdown.style.left = rect.left + 'px';
-    dropdown.style.width = '200px';
+    // Search for users
+    await searchCommentMentions(atMatch[1]);
   } else {
-    dropdown.style.display = 'none';
+    hideCommentMentionDropdown();
   }
 }
+
+async function searchCommentMentions(search) {
+  const dropdown = commentMentionData.dropdown;
+  if (!dropdown) return;
+  
+  try {
+    const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/users?search=${encodeURIComponent(search)}`);
+    const data = await response.json();
+    commentMentionData.users = data.users || [];
+    
+    if (commentMentionData.users.length === 0) {
+      dropdown.innerHTML = '<div class="mention-no-results" style="padding: 12px; color: #718096; font-size: 14px; text-align: center;">No users found</div>';
+    } else {
+      dropdown.innerHTML = commentMentionData.users.slice(0, 5).map((user, index) => `
+        <div class="mention-item ${index === 0 ? 'selected' : ''}" 
+             style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; ${index === 0 ? 'background: #f3e8ff;' : ''}"
+             onmouseenter="selectCommentMention(${index})"
+             onclick="insertCommentMention(${index})">
+          <img src="${user.profilePhoto || 'https://cdn.discordapp.com/embed/avatars/0.png'}" 
+               alt="${user.username}" 
+               style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-weight: 600; color: #2d3748; font-size: 14px;">${user.nickname || user.username}</span>
+            <span style="color: #718096; font-size: 12px;">@${user.username}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    commentMentionData.selectedIndex = 0;
+    positionCommentDropdown();
+    dropdown.style.display = 'block';
+  } catch (error) {
+    console.error('Error searching users:', error);
+    hideCommentMentionDropdown();
+  }
+}
+
+function selectCommentMention(index) {
+  commentMentionData.selectedIndex = index;
+  const items = commentMentionData.dropdown.querySelectorAll('.mention-item');
+  items.forEach((item, i) => {
+    item.style.background = i === index ? '#f3e8ff' : '';
+    item.classList.toggle('selected', i === index);
+  });
+}
+
+function insertCommentMention(index) {
+  const user = commentMentionData.users[index];
+  if (!user || !commentMentionData.textarea) return;
+  
+  const textarea = commentMentionData.textarea;
+  const value = textarea.value;
+  const atPos = commentMentionData.atPosition;
+  const cursorPos = textarea.selectionStart;
+  
+  // Replace @searchterm with @username
+  const beforeAt = value.substring(0, atPos);
+  const afterCursor = value.substring(cursorPos);
+  const newValue = beforeAt + '@' + user.username + ' ' + afterCursor;
+  
+  textarea.value = newValue;
+  
+  // Move cursor after the mention
+  const newCursorPos = atPos + user.username.length + 2;
+  textarea.setSelectionRange(newCursorPos, newCursorPos);
+  textarea.focus();
+  
+  hideCommentMentionDropdown();
+}
+
+function positionCommentDropdown() {
+  const textarea = commentMentionData.textarea;
+  const dropdown = commentMentionData.dropdown;
+  if (!textarea || !dropdown) return;
+  
+  // Position below the textarea
+  dropdown.style.position = 'absolute';
+  dropdown.style.width = '250px';
+  dropdown.style.top = '100%';
+  dropdown.style.left = '0';
+  dropdown.style.marginTop = '5px';
+}
+
+function hideCommentMentionDropdown() {
+  if (commentMentionData.dropdown) {
+    commentMentionData.dropdown.style.display = 'none';
+  }
+  commentMentionData.searchTerm = '';
+  commentMentionData.selectedIndex = 0;
+  commentMentionData.users = [];
+  commentMentionData.atPosition = -1;
+}
+
+// Handle keyboard navigation in comment mentions
+function handleCommentMentionKeydown(event) {
+  const dropdown = commentMentionData.dropdown;
+  if (!dropdown || dropdown.style.display === 'none') return;
+  
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    commentMentionData.selectedIndex = Math.min(commentMentionData.selectedIndex + 1, commentMentionData.users.length - 1);
+    selectCommentMention(commentMentionData.selectedIndex);
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    commentMentionData.selectedIndex = Math.max(commentMentionData.selectedIndex - 1, 0);
+    selectCommentMention(commentMentionData.selectedIndex);
+  } else if (event.key === 'Enter' || event.key === 'Tab') {
+    if (commentMentionData.users.length > 0 && dropdown.style.display !== 'none') {
+      event.preventDefault();
+      insertCommentMention(commentMentionData.selectedIndex);
+    }
+  } else if (event.key === 'Escape') {
+    hideCommentMentionDropdown();
+  }
+}
+
+// Initialize comment mention keyboard listener
+document.addEventListener('keydown', (e) => {
+  if (e.target && e.target.id === 'comment-text') {
+    handleCommentMentionKeydown(e);
+  }
+});
+// ===== END COMMENT @MENTION FUNCTIONALITY =====
 
 // Delete blog post (admin only)
 async function deleteBlogPost(blogId) {
