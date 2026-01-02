@@ -642,7 +642,7 @@ const routes = {
 
   // Delete account
   'DELETE /api/users/me': async (request, env) => {
-    const user = await getUserFromRequest(request, env);
+    const user = await getAuthUser(request, env);
     if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
@@ -723,7 +723,7 @@ const routes = {
 
   // Create new blog (admin only)
   'POST /api/blogs': async (request, env) => {
-    const user = await getUserFromRequest(request, env);
+    const user = await getAuthUser(request, env);
     if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
@@ -767,7 +767,7 @@ const routes = {
 
   // Add comment to blog
   'POST /api/blogs/:id/comments': async (request, env, params) => {
-    const user = await getUserFromRequest(request, env);
+    const user = await getAuthUser(request, env);
     if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
@@ -820,7 +820,7 @@ const routes = {
 
   // Delete comment (admin only)
   'DELETE /api/blogs/:id/comments/:commentId': async (request, env, params) => {
-    const user = await getUserFromRequest(request, env);
+    const user = await getAuthUser(request, env);
     if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
@@ -864,7 +864,7 @@ const routes = {
 
   // Add reply to comment
   'POST /api/blogs/:id/comments/:commentId/replies': async (request, env, params) => {
-    const user = await getUserFromRequest(request, env);
+    const user = await getAuthUser(request, env);
     if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
@@ -912,7 +912,7 @@ const routes = {
 
   // Delete blog (admin only)
   'DELETE /api/blogs/:id': async (request, env, params) => {
-    const user = await getUserFromRequest(request, env);
+    const user = await getAuthUser(request, env);
     if (!user || !user.isAdmin) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
@@ -929,7 +929,7 @@ const routes = {
 
   // Blog suggestions
   'POST /api/suggestions': async (request, env) => {
-    const user = await getUserFromRequest(request, env);
+    const user = await getAuthUser(request, env);
     if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
@@ -959,7 +959,7 @@ const routes = {
 
   // Get all suggestions (admin only)
   'GET /api/suggestions': async (request, env) => {
-    const user = await getUserFromRequest(request, env);
+    const user = await getAuthUser(request, env);
     if (!user || !user.isAdmin) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
