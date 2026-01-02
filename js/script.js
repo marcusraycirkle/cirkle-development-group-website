@@ -141,7 +141,7 @@ async function loadBlogPost(blogId) {
       await fetch(`https://cirkle-api.marcusray.workers.dev/api/blogs/${blogId}/view`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('cirkle_session')}`,
+          'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -516,13 +516,25 @@ async function likeBlog(blogId) {
   }
   
   try {
+    const token = localStorage.getItem('sessionToken');
+    if (!token) {
+      alert('Session expired. Please log in again.');
+      return;
+    }
+    
     const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/blogs/${blogId}/like`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('cirkle_session')}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
+    
+    if (response.status === 401) {
+      alert('Session expired. Please log in again.');
+      localStorage.removeItem('sessionToken');
+      return;
+    }
     
     const data = await response.json();
     
@@ -557,13 +569,25 @@ async function dislikeBlog(blogId) {
   }
   
   try {
+    const token = localStorage.getItem('sessionToken');
+    if (!token) {
+      alert('Session expired. Please log in again.');
+      return;
+    }
+    
     const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/blogs/${blogId}/dislike`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('cirkle_session')}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
+    
+    if (response.status === 401) {
+      alert('Session expired. Please log in again.');
+      localStorage.removeItem('sessionToken');
+      return;
+    }
     
     const data = await response.json();
     
@@ -645,6 +669,13 @@ async function submitReply(commentId) {
     return;
   }
 
+  if (!api.isLoggedIn()) {
+    messageDiv.textContent = 'Please log in to reply';
+    messageDiv.className = 'error-message';
+    messageDiv.style.display = 'block';
+    return;
+  }
+
   try {
     messageDiv.textContent = 'Posting reply...';
     messageDiv.className = 'success-message';
@@ -653,13 +684,19 @@ async function submitReply(commentId) {
     const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/blogs/${currentBlogId}/comments/${commentId}/replies`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('cirkle_session')}`,
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ content: replyText.value.trim() })
     });
     
     const data = await response.json();
+    
+    if (response.status === 401) {
+      messageDiv.textContent = 'Session expired. Please log in again.';
+      messageDiv.className = 'error-message';
+      return;
+    }
     
     if (response.ok && data.success) {
       messageDiv.textContent = 'Reply posted!';

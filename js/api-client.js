@@ -206,9 +206,16 @@ class APIClient {
     return response.suggestions || [];
   }
 
-  // Check if logged in
+  // Check if logged in (re-read from localStorage each time)
   isLoggedIn() {
+    this.sessionToken = localStorage.getItem('sessionToken');
     return !!this.sessionToken;
+  }
+  
+  // Get current session token (fresh from localStorage)
+  getToken() {
+    this.sessionToken = localStorage.getItem('sessionToken');
+    return this.sessionToken;
   }
 }
 

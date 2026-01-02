@@ -56,12 +56,18 @@ async function verifyToken(token, secret) {
 // Helper to get authenticated user from request
 async function getAuthUser(request, env) {
   const authHeader = request.headers.get('Authorization');
+  console.log('Auth header present:', !!authHeader);
+  
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('No valid auth header');
     return null;
   }
   
   const token = authHeader.substring(7);
+  console.log('Token prefix:', token.substring(0, 20));
+  
   const sessionData = await env.SESSIONS.get(token);
+  console.log('Session found:', !!sessionData);
   
   if (!sessionData) {
     return null;
@@ -69,11 +75,13 @@ async function getAuthUser(request, env) {
   
   const session = JSON.parse(sessionData);
   if (session.expiresAt < Date.now()) {
+    console.log('Session expired');
     await env.SESSIONS.delete(token);
     return null;
   }
   
   const userData = await env.USERS.get(`user:${session.userId}`);
+  console.log('User found:', !!userData);
   return userData ? JSON.parse(userData) : null;
 }
 
