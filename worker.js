@@ -384,7 +384,7 @@ const routes = {
     const updates = await request.json();
     
     // Validate and apply updates
-    const allowedFields = ['nickname', 'pronouns', 'bio', 'profilePhoto'];
+    const allowedFields = ['nickname', 'pronouns', 'bio', 'profilePhoto', 'publicEmail'];
     for (const field of allowedFields) {
       if (updates[field] !== undefined) {
         if (field === 'bio') {
@@ -397,6 +397,15 @@ const routes = {
           const urlPattern = /(https?:\/\/|www\.)/i;
           if (urlPattern.test(updates.bio)) {
             return new Response(JSON.stringify({ error: 'Links are not allowed in bio' }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+        if (field === 'publicEmail' && updates.publicEmail) {
+          const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailPattern.test(updates.publicEmail)) {
+            return new Response(JSON.stringify({ error: 'Invalid email format' }), {
               status: 400,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             });
@@ -748,7 +757,7 @@ const routes = {
       authorNickname: originalAuthor || user.nickname || user.username,
       authorId: user.id,
       authorUsername: user.username,
-      authorEmail: user.email || 'info@cirkledevelopment.co.uk',
+      authorEmail: user.publicEmail || null,
       originalAuthor: originalAuthor || null,
       publishDate: new Date().toISOString(),
       bannerImage: bannerImage || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&h=400&fit=crop',

@@ -178,7 +178,7 @@ async function loadBlogPost(blogId) {
           <div class="author-avatar">${authorInitial}</div>
           <div class="author-info">
             <div class="author-name">${authorName}</div>
-            <div class="author-email">${blog.authorEmail || 'info@cirkledevelopment.co.uk'}</div>
+            ${blog.authorEmail ? `<div class="author-email">${blog.authorEmail}</div>` : ''}
           </div>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">

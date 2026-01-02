@@ -773,3 +773,79 @@
 .rich-editor li {
   margin: 5px 0;
 }
+
+/* @Mention Styles */
+.mention-popup {
+  position: absolute;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  min-width: 200px;
+  display: none;
+}
+
+.mention-popup.visible {
+  display: block;
+}
+
+.mention-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.mention-item:hover,
+.mention-item.selected {
+  background: #f3e8ff;
+}
+
+.mention-item img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.mention-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.mention-item-name {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 14px;
+}
+
+.mention-item-username {
+  color: #718096;
+  font-size: 12px;
+}
+
+.mention-no-results {
+  padding: 12px;
+  color: #718096;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Highlighted mention in editor */
+.mention {
+  color: #6b46c1;
+  background: #f3e8ff;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Non-editable mention span */
+.mention[contenteditable="false"] {
+  user-select: all;
+}
