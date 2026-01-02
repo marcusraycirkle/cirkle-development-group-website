@@ -224,26 +224,26 @@
         <div class="modal-body">
           <form onsubmit="submitBlog(event)">
             <div class="form-group">
-              <label for="blog-title">Headline *</label>
-              <input type="text" id="blog-title" required placeholder="Enter blog headline">
+              <label for="create-blog-title">Headline *</label>
+              <input type="text" id="create-blog-title" required placeholder="Enter blog headline">
             </div>
             <div class="form-group">
-              <label for="blog-content">Body / Content *</label>
-              <textarea id="blog-content" required placeholder="Write your blog content here..." style="min-height: 200px;"></textarea>
+              <label for="create-blog-content">Body / Content *</label>
+              <textarea id="create-blog-content" required placeholder="Write your blog content here..." style="min-height: 200px;"></textarea>
             </div>
             <div class="form-group">
-              <label for="blog-banner">Banner Image URL (Optional)</label>
-              <input type="url" id="blog-banner" placeholder="https://example.com/image.jpg">
+              <label for="create-blog-banner">Banner Image URL (Optional)</label>
+              <input type="url" id="create-blog-banner" placeholder="https://example.com/image.jpg">
               <small style="color: #718096; font-size: 13px;">Leave empty for default gradient banner</small>
             </div>
             <div class="form-group">
-              <label for="blog-original-author">Original Author (Optional)</label>
-              <input type="text" id="blog-original-author" placeholder="If reposting content, credit the original author">
+              <label for="create-blog-original-author">Original Author (Optional)</label>
+              <input type="text" id="create-blog-original-author" placeholder="If reposting content, credit the original author">
               <small style="color: #718096; font-size: 13px;">Leave empty to use your name as author</small>
             </div>
             <div class="form-group">
               <label style="display: flex; align-items: center; cursor: pointer; gap: 10px;">
-                <input type="checkbox" id="blog-disable-comments" style="width: 20px; height: 20px; cursor: pointer;">
+                <input type="checkbox" id="create-blog-disable-comments" style="width: 20px; height: 20px; cursor: pointer;">
                 <span>Disable comments on this post</span>
               </label>
             </div>
@@ -376,11 +376,11 @@
     
     function closeCreateBlogModal() {
       document.getElementById('create-blog-modal').style.display = 'none';
-      document.getElementById('blog-title').value = '';
-      document.getElementById('blog-content').value = '';
-      document.getElementById('blog-banner').value = '';
-      document.getElementById('blog-original-author').value = '';
-      document.getElementById('blog-disable-comments').checked = false;
+      document.getElementById('create-blog-title').value = '';
+      document.getElementById('create-blog-content').value = '';
+      document.getElementById('create-blog-banner').value = '';
+      document.getElementById('create-blog-original-author').value = '';
+      document.getElementById('create-blog-disable-comments').checked = false;
       document.getElementById('blog-message').textContent = '';
     }
     
@@ -388,11 +388,11 @@
       event.preventDefault();
       
       const messageDiv = document.getElementById('blog-message');
-      const title = document.getElementById('blog-title').value.trim();
-      const content = document.getElementById('blog-content').value.trim();
-      const banner = document.getElementById('blog-banner').value.trim();
-      const originalAuthor = document.getElementById('blog-original-author').value.trim();
-      const commentsDisabled = document.getElementById('blog-disable-comments').checked;
+      const title = document.getElementById('create-blog-title').value.trim();
+      const content = document.getElementById('create-blog-content').value.trim();
+      const banner = document.getElementById('create-blog-banner').value.trim();
+      const originalAuthor = document.getElementById('create-blog-original-author').value.trim();
+      const commentsDisabled = document.getElementById('create-blog-disable-comments').checked;
       
       try {
         messageDiv.textContent = 'Publishing...';
