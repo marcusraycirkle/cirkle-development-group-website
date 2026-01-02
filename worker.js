@@ -553,7 +553,48 @@ const routes = {
     });
   },
 
-  // Unfollow a user
+  // Unfollow a user (POST version for easier frontend)
+  'POST /api/users/:id/unfollow': async (request, env, params) => {
+    const currentUser = await getAuthUser(request, env);
+    if (!currentUser) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const targetUserId = params.id;
+
+    // Get target user
+    const targetUserData = await env.USERS.get(`user:${targetUserId}`);
+    if (!targetUserData) {
+      return new Response(JSON.stringify({ error: 'User not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const targetUser = JSON.parse(targetUserData);
+
+    // Initialize arrays if needed
+    if (!currentUser.following) currentUser.following = [];
+    if (!targetUser.followers) targetUser.followers = [];
+
+    // Remove follow relationship
+    currentUser.following = currentUser.following.filter(id => id !== targetUserId);
+    targetUser.followers = targetUser.followers.filter(id => id !== currentUser.id);
+
+    // Save both users
+    await env.USERS.put(`user:${currentUser.id}`, JSON.stringify(currentUser));
+    await env.USERS.put(`discord:${currentUser.discordId}`, JSON.stringify(currentUser));
+    await env.USERS.put(`user:${targetUser.id}`, JSON.stringify(targetUser));
+    await env.USERS.put(`discord:${targetUser.discordId}`, JSON.stringify(targetUser));
+
+    return new Response(JSON.stringify({ success: true, following: currentUser.following }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Unfollow a user (DELETE version)
   'DELETE /api/users/:id/follow': async (request, env, params) => {
     const currentUser = await getAuthUser(request, env);
     if (!currentUser) {

@@ -635,97 +635,74 @@
     let currentProfileUserId = null;
 
     function openNetworkModal() {
-      document.getElementById('network-modal').classList.add('active');
-      loadNetwork();
+      // Open your own public profile instead of the old network modal
+      if (currentUser) {
+        openUserProfile(currentUser.id);
+      }
     }
 
     function closeNetworkModal() {
       document.getElementById('network-modal').classList.remove('active');
     }
 
-    function openUserProfile(userId) {
-      // TODO: Implement API endpoint for fetching other user profiles
-      console.log('Profile viewing feature coming soon!');
-      return;
-      
-      /* Disabled until API is ready
-      const user = auth.getUserById(userId);
-      if (!user) return;
+    async function openUserProfile(userId) {
+      try {
+        // Fetch user data from API
+        const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/users/${userId}`);
+        if (!response.ok) {
+          alert('Could not load user profile');
+          return;
+        }
+        
+        const user = await response.json();
+        currentProfileUserId = userId;
+        
+        const userStats = user.activityStats || { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
+        const isOwnProfile = currentUser && currentUser.id === userId;
+        const isFollowing = currentUser && (currentUser.following || []).includes(userId);
 
-      currentProfileUserId = userId;
-      const userStats = user.activityStats || { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
-
-      const adminBadge = user.isAdmin ? ' <span style="display: inline-flex; align-items: center; background: #3b82f6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-left: 6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white" style="margin-right: 3px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Admin</span>' : '';
-      document.getElementById('profile-modal-username').innerHTML = (user.nickname || user.username) + adminBadge;
-      document.getElementById('profile-modal-photo').src = user.profilePhoto;
-      document.getElementById('profile-modal-name').textContent = `${user.nickname || user.username}`;
-      document.getElementById('profile-modal-pronouns').textContent = user.pronouns || '';
-      document.getElementById('profile-modal-pronouns').style.display = user.pronouns ? 'block' : 'none';
-      document.getElementById('profile-modal-followers').textContent = (user.followers || []).length;
-      document.getElementById('profile-modal-following').textContent = (user.following || []).length;
-      
-      // Show activity stats
-      let bioContent = user.bio ? `<p>${user.bio}</p>` : '<p style="color: #718096; font-style: italic;">No bio yet</p>';
-      bioContent += `
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px;">
-          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
-            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsInteracted}</div>
-            <div style="font-size: 12px; color: #718096;">Blogs Interacted</div>
-          </div>
-          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
-            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsSuggested}</div>
-            <div style="font-size: 12px; color: #718096;">Blogs Suggested</div>
-          </div>
-          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
-            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.commentsPosted}</div>
-            <div style="font-size: 12px; color: #718096;">Comments Posted</div>
-          </div>
-          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
-            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsAuthored}</div>
-            <div style="font-size: 12px; color: #718096;">Blogs Authored</div>
-          </div>
-        </div>
-      `;
-      document.getElementById('profile-modal-bio').innerHTML = bioContent;
-      
-      document.getElementById('following-count').textContent = following.length;
-
-      const networkList = document.getElementById('network-list');
-      
-      if (followers.length === 0 && following.length === 0) {
-        networkList.innerHTML = '<p style="text-align: center; color: #718096; padding: 20px;">No connections yet. Start following users!</p>';
-        return;
-      }
-
-      let html = '';
-      
-      if (following.length > 0) {
-        html += '<h3>Following</h3>';
-        html += following.map(user => `
-          <div style="display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="openUserProfile(${user.id})">
-            <img src="${user.profilePhoto}" alt="${user.username}" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
-            <div>
-              <strong>${user.username}</strong>
-              ${user.pronouns ? `<p style="color: #718096; font-size: 13px; margin: 0;">${user.pronouns}</p>` : ''}
+        const adminBadge = user.isAdmin ? ' <span style="display: inline-flex; align-items: center; background: #3b82f6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-left: 6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white" style="margin-right: 3px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Admin</span>' : '';
+        document.getElementById('profile-modal-username').innerHTML = (user.nickname || user.username) + adminBadge;
+        document.getElementById('profile-modal-photo').src = user.profilePhoto || 'https://cdn.discordapp.com/embed/avatars/0.png';
+        document.getElementById('profile-modal-name').textContent = user.nickname || user.username;
+        document.getElementById('profile-modal-pronouns').textContent = user.pronouns || '';
+        document.getElementById('profile-modal-pronouns').style.display = user.pronouns ? 'block' : 'none';
+        document.getElementById('profile-modal-followers').textContent = (user.followers || []).length;
+        document.getElementById('profile-modal-following').textContent = (user.following || []).length;
+        
+        // Show activity stats in bio section
+        let bioContent = user.bio ? `<p style="margin-bottom: 15px;">${user.bio}</p>` : '<p style="color: #718096; font-style: italic; margin-bottom: 15px;">No bio yet</p>';
+        bioContent += `
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <div style="text-align: center; padding: 10px; background: white; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsInteracted || 0}</div>
+              <div style="font-size: 12px; color: #718096;">Posts Interacted</div>
+            </div>
+            <div style="text-align: center; padding: 10px; background: white; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.commentsPosted || 0}</div>
+              <div style="font-size: 12px; color: #718096;">Comments Posted</div>
             </div>
           </div>
-        `).join('');
+        `;
+        document.getElementById('profile-modal-bio').innerHTML = bioContent;
+        
+        // Show/hide follow button based on whether viewing own profile
+        const followBtn = document.getElementById('follow-btn');
+        if (isOwnProfile) {
+          followBtn.style.display = 'none';
+        } else {
+          followBtn.style.display = 'inline-block';
+          followBtn.textContent = isFollowing ? 'Unfollow' : 'Follow';
+        }
+        
+        // Clear comments section (could implement later)
+        document.getElementById('profile-modal-comments').innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Comments coming soon</p>';
+        
+        document.getElementById('profile-modal').classList.add('active');
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        alert('Could not load user profile');
       }
-
-      if (followers.length > 0) {
-        html += '<h3 style="margin-top: 20px;">Followers</h3>';
-        html += followers.map(user => `
-          <div style="display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="openUserProfile(${user.id})">
-            <img src="${user.profilePhoto}" alt="${user.username}" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
-            <div>
-              <strong>${user.username}</strong>
-              ${user.pronouns ? `<p style="color: #718096; font-size: 13px; margin: 0;">${user.pronouns}</p>` : ''}
-            </div>
-          </div>
-        `).join('');
-      }
-
-      networkList.innerHTML = html;
     }
 
     // Profile Modal Functions
@@ -798,26 +775,45 @@
       document.getElementById('profile-modal').classList.add('active');
     }
 
-    function toggleFollow() {
-      // TODO: Implement follow/unfollow API endpoints
-      console.log('Follow feature coming soon!');
-      return;
+    async function toggleFollow() {
+      if (!currentProfileUserId || !currentUser) return;
       
-      /* Disabled until API is ready
-      if (!currentProfileUserId) return;
+      const isCurrentlyFollowing = (currentUser.following || []).includes(currentProfileUserId);
       
-      const result = auth.followUser(currentProfileUserId);
-      if (result.success) {
-        document.getElementById('follow-btn').textContent = result.isFollowing ? 'Unfollow' : 'Follow';
-        loadNetworkStats();
+      try {
+        const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/users/${currentProfileUserId}/${isCurrentlyFollowing ? 'unfollow' : 'follow'}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('cirkle_session')}`,
+            'Content-Type': 'application/json'
+          }
+        });
         
-        // Update follower count in modal
-        const user = auth.getUserById(currentProfileUserId);
-        if (user) {
-          document.getElementById('profile-modal-followers').textContent = (user.followers || []).length;
+        if (response.ok) {
+          // Update local state
+          if (isCurrentlyFollowing) {
+            currentUser.following = currentUser.following.filter(id => id !== currentProfileUserId);
+          } else {
+            if (!currentUser.following) currentUser.following = [];
+            currentUser.following.push(currentProfileUserId);
+          }
+          
+          // Update button text
+          document.getElementById('follow-btn').textContent = isCurrentlyFollowing ? 'Follow' : 'Unfollow';
+          
+          // Refresh the profile to get updated follower count
+          openUserProfile(currentProfileUserId);
+          
+          // Update network stats on dashboard
+          loadNetworkStats();
+        } else {
+          const data = await response.json();
+          alert(data.error || 'Failed to update follow status');
         }
+      } catch (error) {
+        console.error('Error toggling follow:', error);
+        alert('Failed to update follow status');
       }
-      */
     }
 
     // Delete Account Functions
