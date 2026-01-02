@@ -215,20 +215,20 @@ async function loadBlogPost(blogId) {
       </div>
     </div>
 
-    <!-- Like/Dislike Reactions -->
-    <div class="blog-reactions" style="display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px;">
+    <div class="blog-post-content">
+      ${blog.content}
+    </div>
+
+    <!-- Like/Dislike Reactions (at bottom of post) -->
+    <div class="blog-reactions" style="display: flex; gap: 15px; padding: 20px 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; margin: 20px 0;">
       <button onclick="likeBlog(${blog.id})" id="like-btn" class="reaction-btn ${userLiked ? 'active' : ''}" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 2px solid ${userLiked ? '#38a169' : '#e2e8f0'}; border-radius: 25px; background: ${userLiked ? '#f0fff4' : 'white'}; cursor: pointer; font-size: 16px; transition: all 0.2s ease;">
         <span style="font-size: 20px;">👍</span>
-        <span id="like-count" style="font-weight: 600; color: #38a169;">${blog.likes}</span>
+        <span id="like-count" style="font-weight: 600; color: #38a169;">${blog.likes || 0}</span>
       </button>
       <button onclick="dislikeBlog(${blog.id})" id="dislike-btn" class="reaction-btn ${userDisliked ? 'active' : ''}" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 2px solid ${userDisliked ? '#e53e3e' : '#e2e8f0'}; border-radius: 25px; background: ${userDisliked ? '#fff5f5' : 'white'}; cursor: pointer; font-size: 16px; transition: all 0.2s ease;">
         <span style="font-size: 20px;">👎</span>
-        <span id="dislike-count" style="font-weight: 600; color: #e53e3e;">${blog.dislikes}</span>
+        <span id="dislike-count" style="font-weight: 600; color: #e53e3e;">${blog.dislikes || 0}</span>
       </button>
-    </div>
-
-    <div class="blog-post-content">
-      ${blog.content}
     </div>
 
     <div class="comments-section">
@@ -634,18 +634,50 @@ function hideReplyForm(commentId) {
   document.getElementById(`reply-text-${commentId}`).value = '';
 }
 
-function submitReply(commentId) {
+async function submitReply(commentId) {
   const replyText = document.getElementById(`reply-text-${commentId}`);
   const messageDiv = document.getElementById(`reply-message-${commentId}`);
   
   if (!replyText.value.trim()) {
     messageDiv.textContent = 'Please write a reply';
     messageDiv.className = 'error-message';
+    messageDiv.style.display = 'block';
     return;
   }
 
-  // TODO: Convert to API call
-  alert('Reply functionality coming soon with API integration!');
+  try {
+    messageDiv.textContent = 'Posting reply...';
+    messageDiv.className = 'success-message';
+    messageDiv.style.display = 'block';
+    
+    const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/blogs/${currentBlogId}/comments/${commentId}/replies`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('cirkle_session')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ content: replyText.value.trim() })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok && data.success) {
+      messageDiv.textContent = 'Reply posted!';
+      replyText.value = '';
+      
+      // Reload blog to show new reply
+      setTimeout(() => {
+        loadBlogPost(currentBlogId);
+      }, 1000);
+    } else {
+      messageDiv.textContent = data.error || 'Failed to post reply';
+      messageDiv.className = 'error-message';
+    }
+  } catch (error) {
+    console.error('Error posting reply:', error);
+    messageDiv.textContent = 'Failed to post reply';
+    messageDiv.className = 'error-message';
+  }
 }
 
 function openUserProfile(userId) {

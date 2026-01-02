@@ -729,7 +729,11 @@ const routes = {
         if (key.name.startsWith('blog:')) {
           const blogData = await env.BLOGS.get(key.name);
           if (blogData) {
-            blogs.push(JSON.parse(blogData));
+            const blog = JSON.parse(blogData);
+            // Initialize likes/dislikes for existing blogs
+            if (typeof blog.likes !== 'number') blog.likes = 0;
+            if (typeof blog.dislikes !== 'number') blog.dislikes = 0;
+            blogs.push(blog);
           }
         }
       }
@@ -819,6 +823,12 @@ const routes = {
     }
 
     const blog = JSON.parse(blogData);
+    
+    // Initialize likes/dislikes for existing blogs that don't have them
+    if (typeof blog.likes !== 'number') blog.likes = 0;
+    if (typeof blog.dislikes !== 'number') blog.dislikes = 0;
+    if (!blog.likedBy) blog.likedBy = [];
+    if (!blog.dislikedBy) blog.dislikedBy = [];
     
     // Increment view count
     blog.viewCount = (blog.viewCount || 0) + 1;
