@@ -95,7 +95,9 @@ async function loadBlogs() {
               <span class="blog-author" onclick="event.stopPropagation();">By ${blog.authorNickname || blog.authorUsername}</span>
               <span class="blog-date"> • ${formattedDate} at ${formattedTime}</span>
             </div>
-            <div style="display: flex; gap: 12px;">
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <span class="blog-likes" style="color: #38a169;">👍 ${blog.likes || 0}</span>
+              <span class="blog-dislikes" style="color: #e53e3e;">👎 ${blog.dislikes || 0}</span>
               <span class="blog-views" style="color: #718096;">👁️ ${blog.viewCount || 0}</span>
               <span class="blog-comments">💬 ${blog.comments.length}</span>
             </div>
@@ -133,8 +135,29 @@ async function loadBlogPost(blogId) {
     return;
   }
 
+  // Track view and increment user interaction if logged in
+  if (api.isLoggedIn()) {
+    try {
+      await fetch(`https://cirkle-api.marcusray.workers.dev/api/blogs/${blogId}/view`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('cirkle_session')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (e) {
+      console.log('Could not track view');
+    }
+  }
+
   // Ensure comments array exists
   blog.comments = blog.comments || [];
+
+  // Initialize likes/dislikes for existing blogs
+  blog.likes = blog.likes || 0;
+  blog.dislikes = blog.dislikes || 0;
+  blog.likedBy = blog.likedBy || [];
+  blog.dislikedBy = blog.dislikedBy || [];
 
   // Update page title
   document.title = `${blog.title} - Cirkle Development Group`;
@@ -165,6 +188,10 @@ async function loadBlogPost(blogId) {
     </button>
   ` : '';
 
+  // Determine if user has liked/disliked
+  const userLiked = currentUserInfo && blog.likedBy.includes(currentUserInfo.id);
+  const userDisliked = currentUserInfo && blog.dislikedBy.includes(currentUserInfo.id);
+
   blogContent.innerHTML = `
     <div class="blog-post-banner" style="background-image: url('${blog.bannerImage}');"></div>
     
@@ -186,6 +213,18 @@ async function loadBlogPost(blogId) {
           <div style="color: #718096; font-size: 14px;">👁️ ${blog.viewCount || 0} views</div>
         </div>
       </div>
+    </div>
+
+    <!-- Like/Dislike Reactions -->
+    <div class="blog-reactions" style="display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px;">
+      <button onclick="likeBlog(${blog.id})" id="like-btn" class="reaction-btn ${userLiked ? 'active' : ''}" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 2px solid ${userLiked ? '#38a169' : '#e2e8f0'}; border-radius: 25px; background: ${userLiked ? '#f0fff4' : 'white'}; cursor: pointer; font-size: 16px; transition: all 0.2s ease;">
+        <span style="font-size: 20px;">👍</span>
+        <span id="like-count" style="font-weight: 600; color: #38a169;">${blog.likes}</span>
+      </button>
+      <button onclick="dislikeBlog(${blog.id})" id="dislike-btn" class="reaction-btn ${userDisliked ? 'active' : ''}" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 2px solid ${userDisliked ? '#e53e3e' : '#e2e8f0'}; border-radius: 25px; background: ${userDisliked ? '#fff5f5' : 'white'}; cursor: pointer; font-size: 16px; transition: all 0.2s ease;">
+        <span style="font-size: 20px;">👎</span>
+        <span id="dislike-count" style="font-weight: 600; color: #e53e3e;">${blog.dislikes}</span>
+      </button>
     </div>
 
     <div class="blog-post-content">
@@ -468,6 +507,90 @@ document.addEventListener('keydown', (e) => {
   }
 });
 // ===== END COMMENT @MENTION FUNCTIONALITY =====
+
+// ===== LIKE/DISLIKE FUNCTIONALITY =====
+async function likeBlog(blogId) {
+  if (!api.isLoggedIn()) {
+    alert('Please log in to like posts');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/blogs/${blogId}/like`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('cirkle_session')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Update UI
+      document.getElementById('like-count').textContent = data.likes;
+      document.getElementById('dislike-count').textContent = data.dislikes;
+      
+      const likeBtn = document.getElementById('like-btn');
+      const dislikeBtn = document.getElementById('dislike-btn');
+      
+      if (data.userLiked) {
+        likeBtn.style.border = '2px solid #38a169';
+        likeBtn.style.background = '#f0fff4';
+      } else {
+        likeBtn.style.border = '2px solid #e2e8f0';
+        likeBtn.style.background = 'white';
+      }
+      
+      dislikeBtn.style.border = '2px solid #e2e8f0';
+      dislikeBtn.style.background = 'white';
+    }
+  } catch (error) {
+    console.error('Error liking post:', error);
+  }
+}
+
+async function dislikeBlog(blogId) {
+  if (!api.isLoggedIn()) {
+    alert('Please log in to dislike posts');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/blogs/${blogId}/dislike`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('cirkle_session')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Update UI
+      document.getElementById('like-count').textContent = data.likes;
+      document.getElementById('dislike-count').textContent = data.dislikes;
+      
+      const likeBtn = document.getElementById('like-btn');
+      const dislikeBtn = document.getElementById('dislike-btn');
+      
+      if (data.userDisliked) {
+        dislikeBtn.style.border = '2px solid #e53e3e';
+        dislikeBtn.style.background = '#fff5f5';
+      } else {
+        dislikeBtn.style.border = '2px solid #e2e8f0';
+        dislikeBtn.style.background = 'white';
+      }
+      
+      likeBtn.style.border = '2px solid #e2e8f0';
+      likeBtn.style.background = 'white';
+    }
+  } catch (error) {
+    console.error('Error disliking post:', error);
+  }
+}
+// ===== END LIKE/DISLIKE FUNCTIONALITY =====
 
 // Delete blog post (admin only)
 async function deleteBlogPost(blogId) {

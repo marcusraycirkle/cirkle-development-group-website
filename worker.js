@@ -764,6 +764,10 @@ const routes = {
       thumbnailImage: thumbnailImage || bannerImage || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=400&fit=crop',
       commentsDisabled: commentsDisabled || false,
       viewCount: 0,
+      likes: 0,
+      dislikes: 0,
+      likedBy: [],
+      dislikedBy: [],
       comments: []
     };
 
@@ -818,6 +822,12 @@ const routes = {
 
     blog.comments.push(newComment);
     await env.BLOGS.put(`blog:${params.id}`, JSON.stringify(blog));
+
+    // Increment user's commentsPosted stat
+    if (!user.activityStats) user.activityStats = { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
+    user.activityStats.commentsPosted = (user.activityStats.commentsPosted || 0) + 1;
+    await env.USERS.put(`user:${user.id}`, JSON.stringify(user));
+    await env.USERS.put(`discord:${user.discordId}`, JSON.stringify(user));
 
     // TODO: If mentions exist, queue Discord DM notifications
     // This would require a Discord bot webhook or separate service
@@ -992,6 +1002,159 @@ const routes = {
     suggestions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     return new Response(JSON.stringify({ suggestions }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Like a blog post
+  'POST /api/blogs/:id/like': async (request, env, params) => {
+    const user = await getAuthUser(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const blogData = await env.BLOGS.get(`blog:${params.id}`);
+    if (!blogData) {
+      return new Response(JSON.stringify({ error: 'Blog not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const blog = JSON.parse(blogData);
+    
+    // Initialize arrays if they don't exist (for existing blogs)
+    if (!blog.likedBy) blog.likedBy = [];
+    if (!blog.dislikedBy) blog.dislikedBy = [];
+    if (typeof blog.likes !== 'number') blog.likes = 0;
+    if (typeof blog.dislikes !== 'number') blog.dislikes = 0;
+
+    const alreadyLiked = blog.likedBy.includes(user.id);
+    const alreadyDisliked = blog.dislikedBy.includes(user.id);
+
+    if (alreadyLiked) {
+      // Remove like (toggle off)
+      blog.likedBy = blog.likedBy.filter(id => id !== user.id);
+      blog.likes = Math.max(0, blog.likes - 1);
+    } else {
+      // Add like
+      blog.likedBy.push(user.id);
+      blog.likes += 1;
+      
+      // Remove dislike if exists
+      if (alreadyDisliked) {
+        blog.dislikedBy = blog.dislikedBy.filter(id => id !== user.id);
+        blog.dislikes = Math.max(0, blog.dislikes - 1);
+      }
+      
+      // Increment user's blogsInteracted stat
+      if (!user.activityStats) user.activityStats = { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
+      user.activityStats.blogsInteracted = (user.activityStats.blogsInteracted || 0) + 1;
+      await env.USERS.put(`user:${user.id}`, JSON.stringify(user));
+      await env.USERS.put(`discord:${user.discordId}`, JSON.stringify(user));
+    }
+
+    await env.BLOGS.put(`blog:${params.id}`, JSON.stringify(blog));
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      likes: blog.likes, 
+      dislikes: blog.dislikes,
+      userLiked: !alreadyLiked,
+      userDisliked: false
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Dislike a blog post
+  'POST /api/blogs/:id/dislike': async (request, env, params) => {
+    const user = await getAuthUser(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const blogData = await env.BLOGS.get(`blog:${params.id}`);
+    if (!blogData) {
+      return new Response(JSON.stringify({ error: 'Blog not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const blog = JSON.parse(blogData);
+    
+    // Initialize arrays if they don't exist (for existing blogs)
+    if (!blog.likedBy) blog.likedBy = [];
+    if (!blog.dislikedBy) blog.dislikedBy = [];
+    if (typeof blog.likes !== 'number') blog.likes = 0;
+    if (typeof blog.dislikes !== 'number') blog.dislikes = 0;
+
+    const alreadyLiked = blog.likedBy.includes(user.id);
+    const alreadyDisliked = blog.dislikedBy.includes(user.id);
+
+    if (alreadyDisliked) {
+      // Remove dislike (toggle off)
+      blog.dislikedBy = blog.dislikedBy.filter(id => id !== user.id);
+      blog.dislikes = Math.max(0, blog.dislikes - 1);
+    } else {
+      // Add dislike
+      blog.dislikedBy.push(user.id);
+      blog.dislikes += 1;
+      
+      // Remove like if exists
+      if (alreadyLiked) {
+        blog.likedBy = blog.likedBy.filter(id => id !== user.id);
+        blog.likes = Math.max(0, blog.likes - 1);
+      }
+      
+      // Increment user's blogsInteracted stat
+      if (!user.activityStats) user.activityStats = { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
+      user.activityStats.blogsInteracted = (user.activityStats.blogsInteracted || 0) + 1;
+      await env.USERS.put(`user:${user.id}`, JSON.stringify(user));
+      await env.USERS.put(`discord:${user.discordId}`, JSON.stringify(user));
+    }
+
+    await env.BLOGS.put(`blog:${params.id}`, JSON.stringify(blog));
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      likes: blog.likes, 
+      dislikes: blog.dislikes,
+      userLiked: false,
+      userDisliked: !alreadyDisliked
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
+  // Track blog view and increment user interaction
+  'POST /api/blogs/:id/view': async (request, env, params) => {
+    const user = await getAuthUser(request, env);
+    
+    const blogData = await env.BLOGS.get(`blog:${params.id}`);
+    if (!blogData) {
+      return new Response(JSON.stringify({ error: 'Blog not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // If user is logged in, increment their blogsInteracted stat
+    if (user) {
+      if (!user.activityStats) user.activityStats = { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
+      user.activityStats.blogsInteracted = (user.activityStats.blogsInteracted || 0) + 1;
+      await env.USERS.put(`user:${user.id}`, JSON.stringify(user));
+      await env.USERS.put(`discord:${user.discordId}`, JSON.stringify(user));
+    }
+
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   },
