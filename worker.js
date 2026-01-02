@@ -749,6 +749,64 @@ const routes = {
     }
   },
 
+  // Get user's recent comments across all blogs
+  'GET /api/users/:id/comments': async (request, env, params) => {
+    const userId = params.id;
+    
+    // Get all blogs
+    const blogsList = await env.BLOGS.list();
+    const userComments = [];
+    
+    for (const key of blogsList.keys) {
+      if (key.name.startsWith('blog:')) {
+        const blogData = await env.BLOGS.get(key.name);
+        if (blogData) {
+          const blog = JSON.parse(blogData);
+          
+          // Find comments by this user
+          if (blog.comments && blog.comments.length > 0) {
+            for (const comment of blog.comments) {
+              if (comment.authorId === userId) {
+                userComments.push({
+                  id: comment.id,
+                  content: comment.content,
+                  timestamp: comment.timestamp,
+                  blogId: blog.id,
+                  blogTitle: blog.title,
+                  isReply: false
+                });
+              }
+              
+              // Check replies too
+              if (comment.replies && comment.replies.length > 0) {
+                for (const reply of comment.replies) {
+                  if (reply.authorId === userId) {
+                    userComments.push({
+                      id: reply.id,
+                      content: reply.content,
+                      timestamp: reply.timestamp,
+                      blogId: blog.id,
+                      blogTitle: blog.title,
+                      isReply: true,
+                      parentCommentAuthor: comment.authorNickname || comment.author
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Sort by timestamp, newest first
+    userComments.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    return new Response(JSON.stringify({ comments: userComments.slice(0, 20) }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  },
+
   // Get single blog (also increments view count)
   'GET /api/blogs/:id': async (request, env, params) => {
     const blogData = await env.BLOGS.get(`blog:${params.id}`);

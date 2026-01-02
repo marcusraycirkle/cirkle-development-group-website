@@ -484,12 +484,33 @@
     }
 
     // Load recent comments
-    function loadRecentComments() {
+    async function loadRecentComments() {
       if (!currentUser) return;
       
       const commentsDiv = document.getElementById('recent-comments');
-      // TODO: Implement API endpoint to fetch user's recent comments
-      commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Recent comments will appear here once you start engaging with blog posts!</p>';
+      commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Loading comments...</p>';
+      
+      try {
+        const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/users/${currentUser.id}/comments`);
+        const data = await response.json();
+        
+        if (!data.comments || data.comments.length === 0) {
+          commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No comments yet. Start engaging with blog posts!</p>';
+          return;
+        }
+        
+        commentsDiv.innerHTML = data.comments.slice(0, 5).map(comment => `
+          <div style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+            <a href="../index.html#blog-post?id=${comment.blogId}" style="color: #6b46c1; font-weight: 600; text-decoration: none; font-size: 14px;">${comment.blogTitle}</a>
+            ${comment.isReply ? `<p style="font-size: 12px; color: #718096; margin: 4px 0;">Reply to ${comment.parentCommentAuthor}</p>` : ''}
+            <p style="color: #4a5568; margin: 6px 0; font-size: 14px;">${comment.content.length > 100 ? comment.content.substring(0, 100) + '...' : comment.content}</p>
+            <small style="color: #a0aec0;">${getTimeAgo(new Date(comment.timestamp))}</small>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading comments:', error);
+        commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Could not load comments</p>';
+      }
     }
 
     function getTimeAgo(date) {
@@ -695,8 +716,8 @@
           followBtn.textContent = isFollowing ? 'Unfollow' : 'Follow';
         }
         
-        // Clear comments section (could implement later)
-        document.getElementById('profile-modal-comments').innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Comments coming soon</p>';
+        // Load user's recent comments
+        loadProfileComments(userId);
         
         document.getElementById('profile-modal').classList.add('active');
       } catch (error) {
@@ -705,74 +726,38 @@
       }
     }
 
+    // Load comments for profile modal
+    async function loadProfileComments(userId) {
+      const commentsDiv = document.getElementById('profile-modal-comments');
+      commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Loading comments...</p>';
+      
+      try {
+        const response = await fetch(`https://cirkle-api.marcusray.workers.dev/api/users/${userId}/comments`);
+        const data = await response.json();
+        
+        if (!data.comments || data.comments.length === 0) {
+          commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No comments yet</p>';
+          return;
+        }
+        
+        commentsDiv.innerHTML = data.comments.slice(0, 5).map(comment => `
+          <div style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
+            <a href="../index.html#blog-post?id=${comment.blogId}" style="color: #6b46c1; font-weight: 600; text-decoration: none;">${comment.blogTitle}</a>
+            ${comment.isReply ? `<p style="font-size: 13px; color: #718096; margin: 5px 0;">Reply to ${comment.parentCommentAuthor}</p>` : ''}
+            <p style="color: #4a5568; margin: 5px 0;">${comment.content.length > 80 ? comment.content.substring(0, 80) + '...' : comment.content}</p>
+            <small style="color: #718096;">${getTimeAgo(new Date(comment.timestamp))}</small>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading profile comments:', error);
+        commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Could not load comments</p>';
+      }
+    }
+
     // Profile Modal Functions
     function closeProfileModal() {
       document.getElementById('profile-modal').classList.remove('active');
       currentProfileUserId = null;
-    }
-
-    function loadProfileComments(userId) {
-      // TODO: Implement API endpoints for user profiles and comments
-      return;
-      /* Disabled until API is ready
-      const user = auth.getUserById(userId);
-      if (!user || !currentUser) return;
-
-      const userStats = user.activityStats || { blogsInteracted: 0, blogsSuggested: 0, commentsPosted: 0, blogsAuthored: 0 };
-      const isFollowing = (currentUser.following || []).includes(userId);
-
-      const adminBadge = user.isAdmin ? ' <span style="display: inline-flex; align-items: center; background: #3b82f6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-left: 6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white" style="margin-right: 3px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Admin</span>' : '';
-      document.getElementById('profile-modal-username').innerHTML = (user.nickname || user.username) + adminBadge;
-      document.getElementById('profile-modal-photo').src = user.profilePhoto;
-      document.getElementById('profile-modal-name').textContent = user.nickname || user.username;
-      document.getElementById('profile-modal-pronouns').textContent = user.pronouns || '';
-      document.getElementById('profile-modal-pronouns').style.display = user.pronouns ? 'block' : 'none';
-      document.getElementById('profile-modal-followers').textContent = (user.followers || []).length;
-      document.getElementById('profile-modal-following').textContent = (user.following || []).length;
-      
-      // Show activity stats
-      let bioContent = user.bio ? `<p>${user.bio}</p>` : '<p style="color: #718096; font-style: italic;">No bio yet</p>';
-      bioContent += `
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px;">
-          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
-            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsInteracted}</div>
-            <div style="font-size: 12px; color: #718096;">Blogs Interacted</div>
-          </div>
-          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
-            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsSuggested}</div>
-            <div style="font-size: 12px; color: #718096;">Blogs Suggested</div>
-          </div>
-          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
-            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.commentsPosted}</div>
-            <div style="font-size: 12px; color: #718096;">Comments Posted</div>
-          </div>
-          <div style="text-align: center; padding: 10px; background: #f7fafc; border-radius: 8px;">
-            <div style="font-size: 20px; font-weight: bold; color: #6b46c1;">${userStats.blogsAuthored}</div>
-            <div style="font-size: 12px; color: #718096;">Blogs Authored</div>
-          </div>
-        </div>
-      `;
-      document.getElementById('profile-modal-bio').innerHTML = bioContent;
-      document.getElementById('follow-btn').textContent = isFollowing ? 'Unfollow' : 'Follow';
-      
-      // Load user's comments
-      const userComments = blogManager.getUserComments(userId);
-      const commentsDiv = document.getElementById('profile-modal-comments');
-      
-      if (userComments.length === 0) {
-        commentsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No comments yet</p>';
-      } else {
-        commentsDiv.innerHTML = userComments.slice(0, 5).map(comment => `
-          <div style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
-            <a href="../index.html#blog-post?id=${comment.blogId}" style="color: #6b46c1; font-weight: 600; text-decoration: none;">${comment.blogTitle}</a>
-            ${comment.isReply ? `<p style="font-size: 13px; color: #718096; margin: 5px 0;">Reply to ${comment.parentCommentAuthor}</p>` : ''}
-            <p style="color: #4a5568; margin: 5px 0;">${comment.content}</p>
-            <small style="color: #718096;">${getTimeAgo(new Date(comment.timestamp))}</small>
-          </div>
-        `).join('');
-      }
-
-      document.getElementById('profile-modal').classList.add('active');
     }
 
     async function toggleFollow() {
