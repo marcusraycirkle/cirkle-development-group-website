@@ -133,6 +133,9 @@ async function loadBlogPost(blogId) {
     return;
   }
 
+  // Ensure comments array exists
+  blog.comments = blog.comments || [];
+
   // Update page title
   document.title = `${blog.title} - Cirkle Development Group`;
 
